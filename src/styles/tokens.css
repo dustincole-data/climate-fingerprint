@@ -1,0 +1,18 @@
+:root {
+  --bg: oklch(20% .02 250);
+  --ink: #efece4;
+  --muted: #8f8b83;
+  --hair: rgba(239,236,228,.16);
+  --iso: rgba(239,236,228,.085);
+  --precip: oklch(72% .075 235);
+  --serif: 'IBM Plex Serif', Georgia, serif;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+}
+:root[data-ground="light"] {
+  --bg: oklch(98.6% .002 250);
+  --ink: #241f1a;
+  --muted: #7d766c;
+  --hair: rgba(36,31,26,.18);
+  --iso: rgba(36,31,26,.075);
+  --precip: oklch(52% .09 240);
+}

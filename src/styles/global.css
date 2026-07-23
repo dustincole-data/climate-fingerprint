@@ -1,0 +1,11 @@
+@import '@fontsource/ibm-plex-serif/400.css';
+@import '@fontsource/ibm-plex-serif/500.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import './tokens.css';
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.poster-stage { display: flex; justify-content: center; padding: 24px; }
+.poster-stage svg { width: min(720px, 94vw); height: auto; }
