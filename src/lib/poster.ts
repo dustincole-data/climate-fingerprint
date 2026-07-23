@@ -1,6 +1,6 @@
 import type { CityPayload, Domain } from './types';
-import { tempColor } from './color';
-import { smooth } from './geometry';
+import { tempColor } from './color.ts';
+import { smooth } from './geometry.ts';
 
 const R_IN = 250, R_OUT = 430, P_MAXH = 56, MIN_BAND = 6;
 
