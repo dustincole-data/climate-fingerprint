@@ -1,0 +1,23 @@
+{
+  "name": "climate-fingerprint",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "data": "node --experimental-strip-types pipeline/src/build.ts"
+  },
+  "dependencies": {
+    "astro": "^5.0.0",
+    "d3-shape": "^3.2.0",
+    "@fontsource/ibm-plex-serif": "^5.0.0",
+    "@fontsource/ibm-plex-sans": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/d3-shape": "^3.1.6",
+    "@types/node": "^22.0.0",
+    "vitest": "^3.0.0"
+  }
+}
