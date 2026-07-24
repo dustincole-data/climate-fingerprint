@@ -47,6 +47,7 @@ async function main() {
     const swing = Math.max(...means) - Math.min(...means);
     return {
       slug: p.meta.slug, name: p.meta.name, region: p.meta.region, country: p.meta.country,
+      signature: p.signature,
       display: { lat: p.meta.resolved.lat, lon: p.meta.resolved.lon },
       summary: { annual_mean_c: annualMeanC, seasonal_swing_c: swing, annual_precip_mm: annualPrecipMm },
     };

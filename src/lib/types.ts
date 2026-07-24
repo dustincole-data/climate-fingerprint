@@ -24,9 +24,10 @@ export interface CityPayload {
 /** Fixed cross-city scale, baked at build from the curated set (T04 §1). */
 export interface Domain { tmin: number; tmax: number; pmax: number; }
 
-/** Lightweight gallery-wall row — no day-of-year data (T07 §4 manifest shape). */
+/** Lightweight gallery-wall row — no day-of-year data (T07 §4 manifest shape). `signature` carries the T06 "feeling" phrase for tile hover. */
 export interface CityManifestEntry {
   slug: string; name: string; region: string; country: string;
+  signature: string;
   display: { lat: number; lon: number };
   summary: { annual_mean_c: number; seasonal_swing_c: number; annual_precip_mm: number };
 }
