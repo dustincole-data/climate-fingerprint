@@ -4,7 +4,9 @@
 // light-mode return visit never flashes the dark default, and picks the reveal duration: the first poster of
 // a session blooms at 800ms, later ones at 400ms so browsing doesn't drag (T04 §5).
 // is:inline is required — a bundled module would be deferred, and the flash is exactly what we are avoiding.
+// Also carries the favicon link, since this is the one component every page's <head> already includes.
 ---
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <script is:inline>
   (function () {
     var root = document.documentElement;
