@@ -2,6 +2,7 @@ node_modules/
 dist/
 .astro/
 public/data/
+pipeline/.cache/
 
 .claude/
 .vercel
