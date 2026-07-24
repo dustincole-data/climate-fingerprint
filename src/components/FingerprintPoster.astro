@@ -1,0 +1,106 @@
+---
+// src/components/FingerprintPoster.astro
+import { arc } from 'd3-shape';
+import type { CityPayload, Domain } from '../lib/types';
+import { N, MONTH_STARTS, MONTHS, angleForDoy, isothermValues } from '../lib/geometry';
+import { rTemp, buildDayBands, buildPrecipRadii, cityStats } from '../lib/poster';
+import { cToF, mmToIn } from '../lib/units';
+
+interface Props { payload: CityPayload; domain: Domain; ground?: 'dark' | 'light'; }
+const { payload, domain, ground = 'dark' } = Astro.props as Props;
+const dark = ground === 'dark';
+
+const W = 1000, H = 1414, CX = 500, CY = 650;
+const R_OUT = 430, R_DISC = 140, R_PBASE = 160, R_MONTH = R_OUT + 46;
+
+const bands = buildDayBands(payload, domain);
+const precipRadii = buildPrecipRadii(payload, domain);
+const { annualMeanC, annualPrecipMm } = cityStats(payload);
+const isos = isothermValues(domain);
+const dayArc = (2 * Math.PI) / N;
+
+const arcGen = arc();
+function dayPath(r0: number, r1: number, a0: number, a1: number): string {
+  return arcGen({ innerRadius: r0, outerRadius: r1, startAngle: a0, endAngle: a1 } as any) ?? '';
+}
+/** angle 0 = -y (12 o'clock), clockwise positive — matches d3-shape's arc angle convention. */
+function polar(r: number, angleRad: number): [number, number] {
+  return [CX + r * Math.sin(angleRad), CY - r * Math.cos(angleRad)];
+}
+
+let precipPath = '';
+for (let i = 0; i < N; i++) {
+  const [x, y] = polar(R_PBASE + precipRadii[i], angleForDoy(i + 1));
+  precipPath += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+}
+for (let i = N - 1; i >= 0; i--) {
+  const [x, y] = polar(R_PBASE, angleForDoy(i + 1));
+  precipPath += 'L' + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+}
+precipPath += 'Z';
+
+const monthTicks = MONTH_STARTS.map((start, m) => {
+  const [x0, y0] = polar(R_OUT + 4, angleForDoy(start));
+  const [x1, y1] = polar(R_OUT + 12, angleForDoy(start));
+  const [lx, ly] = polar(R_MONTH, angleForDoy(start + 15));
+  return { name: MONTHS[m], x0, y0, x1, y1, lx, ly };
+});
+
+const isoLabels = isos.map(t => ({ t, cy: CY - rTemp(t, domain), f: Math.round(cToF(t)) }));
+
+const tempFPrimary = Math.round(cToF(annualMeanC));
+const tempCSecondary = Math.round(annualMeanC);
+const precipInPrimary = mmToIn(annualPrecipMm).toFixed(1);
+const precipMmSecondary = Math.round(annualPrecipMm);
+---
+<svg viewBox={`0 0 ${W} ${H}`} xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label={`${payload.meta.name} climate fingerprint`} data-ground={ground}>
+  <defs>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation={dark ? 6 : 0} result="b" />
+      <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+    <radialGradient id="vig" cx="50%" cy="45%" r="62%">
+      <stop offset="60%" stop-color="#000" stop-opacity="0" />
+      <stop offset="100%" stop-color="#000" stop-opacity={dark ? 0.34 : 0.05} />
+    </radialGradient>
+  </defs>
+  <rect width={W} height={H} fill="var(--bg)" />
+
+  {isos.map((t) => (
+    <circle cx={CX} cy={CY} r={rTemp(t, domain).toFixed(1)} fill="none" stroke="var(--iso)" stroke-width="1" />
+  ))}
+
+  {monthTicks.map((m) => (
+    <>
+      <line x1={m.x0.toFixed(1)} y1={m.y0.toFixed(1)} x2={m.x1.toFixed(1)} y2={m.y1.toFixed(1)} stroke="var(--hair)" stroke-width="1.2" />
+      <text x={m.lx.toFixed(1)} y={(m.ly + 4).toFixed(1)} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="15" letter-spacing="1">{m.name}</text>
+    </>
+  ))}
+
+  <path d={precipPath} fill="var(--precip)" fill-opacity={dark ? 0.5 : 0.55} />
+
+  <g filter="url(#glow)" stroke={dark ? 'none' : 'rgba(30,25,20,0.16)'} stroke-width={dark ? 0 : 0.5}>
+    {bands.map((b, i) => {
+      const a0 = angleForDoy(i + 1) - dayArc * 0.6;
+      const a1 = angleForDoy(i + 1) + dayArc * 0.6;
+      return <path d={dayPath(b.r0, b.r1, a0, a1)} fill={b.fill} />;
+    })}
+  </g>
+
+  {isoLabels.map((l) => (
+    <>
+      <rect x={CX - 20} y={l.cy - 9} width="40" height="18" rx="3" fill="var(--bg)" fill-opacity="0.82" />
+      <text x={CX} y={l.cy - 1} text-anchor="middle" fill="var(--ink)" font-family="var(--sans)" font-size="10.5">{l.f}°F</text>
+      <text x={CX} y={l.cy + 8} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="8">{l.t}°C</text>
+    </>
+  ))}
+
+  <circle cx={CX} cy={CY} r={R_DISC} fill="var(--bg)" />
+  <text x={CX} y={CY - 12} text-anchor="middle" fill="var(--ink)" font-family="var(--serif)" font-size="58" font-weight="500">{payload.meta.name}</text>
+  <text x={CX} y={CY + 16} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="14.5" letter-spacing="3" font-weight="600">{payload.meta.country.toUpperCase()}</text>
+  <text x={CX} y={CY + 50} text-anchor="middle" fill="var(--ink)" font-family="var(--sans)" font-size="15.5">{payload.signature}</text>
+  <text x={CX} y={CY + 80} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="13.5">{tempFPrimary}°F / {tempCSecondary}°C avg · {precipInPrimary} in / {precipMmSecondary} mm/yr</text>
+
+  <rect width={W} height={H} fill="url(#vig)" pointer-events="none" />
+</svg>
