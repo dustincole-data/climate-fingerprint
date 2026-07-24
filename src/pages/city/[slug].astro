@@ -1,0 +1,30 @@
+---
+// src/pages/city/[slug].astro
+import '../../styles/global.css';
+import FingerprintPoster from '../../components/FingerprintPoster.astro';
+import { readCitiesManifest, readCityPayload, readDomain } from '../../lib/data';
+
+export async function getStaticPaths() {
+  const manifest = await readCitiesManifest();
+  const domain = await readDomain();
+  return Promise.all(manifest.map(async (entry) => ({
+    params: { slug: entry.slug },
+    props: { payload: await readCityPayload(entry.slug), domain },
+  })));
+}
+
+const { payload, domain } = Astro.props as Awaited<ReturnType<typeof getStaticPaths>>[number]['props'];
+const title = `${payload.meta.name} — Climate Fingerprint`;
+---
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+</head>
+<body data-ground="dark">
+  <main class="poster-stage">
+    <FingerprintPoster payload={payload} domain={domain} ground="dark" />
+  </main>
+</body>
+</html>
