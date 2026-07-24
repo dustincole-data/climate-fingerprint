@@ -78,6 +78,26 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .controls button:focus-visible { outline: 2px solid var(--precip); outline-offset: -2px; }
 /* Selected state is pure CSS off the root attribute, so it is correct on first paint rather than after the
    controls script runs. The script only mirrors it into aria-pressed. */
+/* The third cluster item is a link, not a toggle, so it borrows the segment's metrics rather than its group
+   chrome — same height and rhythm, visibly not a switch. */
+.controls .about {
+  padding: 7px 11px;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--muted);
+  text-decoration: none;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+.controls .about:hover { color: var(--ink); border-color: var(--muted); }
+.controls .about:focus-visible { outline: 2px solid var(--precip); outline-offset: 2px; }
+.controls .about[aria-current="page"] { color: var(--ink); background: color-mix(in oklab, var(--ink) 11%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .controls .about { transition: none; }
+}
+
 :root[data-units="imperial"] .controls [data-set-units="imperial"],
 :root[data-units="metric"] .controls [data-set-units="metric"],
 :root[data-ground="dark"] .controls [data-set-ground="dark"],

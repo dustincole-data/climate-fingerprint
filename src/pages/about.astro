@@ -1,0 +1,250 @@
+---
+// src/pages/about.astro — the method/positioning page (T05 §7).
+// Layered trust: the poster carries a one-line method note, this page carries the full plain-language version,
+// in the locked §7 order (method · positioning · apolitical frame · attribution). Prose ran through write-blog.
+import '../styles/global.css';
+import FingerprintPoster from '../components/FingerprintPoster.astro';
+import SearchField from '../components/SearchField.astro';
+import Boot from '../components/Boot.astro';
+import Controls from '../components/Controls.astro';
+import { readCityPayload, readDomain } from '../lib/data';
+
+// Denver illustrates the how-to-read list: the widest diurnal band in the set (T02 — 14.7 °C average swing),
+// so every part of the encoding is visible in one mark.
+const denver = await readCityPayload('denver');
+const domain = await readDomain();
+
+const title = 'About — Climate Fingerprint';
+const description =
+  'How a climate fingerprint is computed: 1991 to 2020 day-of-year normals from ERA5, served by Open-Meteo, drawn as one radial poster per city.';
+---
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <Boot />
+</head>
+<body>
+  <header class="bar">
+    <a class="home" href="/">Climate Fingerprint</a>
+    <SearchField />
+    <Controls />
+  </header>
+
+  <main class="page">
+    <article>
+      <h1>About Climate Fingerprint</h1>
+
+      <p class="lead">
+        Every city has a shape to its year. Somebody who has lived in Phoenix a while will describe a long flat
+        plateau of heat with a soft edge on either side. Somebody in Reykjavik describes a narrow gray band that
+        never really commits in either direction. This site draws that shape. One city, one poster, the year read
+        clockwise from January at the top, with temperature, the daily swing, and rainfall all carried in a
+        single mark.
+      </p>
+
+      <h2>What a normal is</h2>
+      <p>
+        Weather is what happened on a Tuesday. Climate is the pattern all those Tuesdays settle into over decades.
+        Everything on this site is the second thing.
+      </p>
+      <p>
+        The word for it is a <em>normal</em>. For each calendar day, January 1st through December 31st, you take
+        that same day out of thirty consecutive years and average it. So the January 15th on the Denver poster is
+        not any January 15th that actually happened. It is the typical one, built out of thirty of them stacked up.
+      </p>
+      <p>
+        The window is 1991 through 2020. I did not pick those years because they looked good. That is the current
+        standard normals period set by the World Meteorological Organization, which rolls forward once a decade,
+        and it is what a climatologist means by the word normal. Any other range invites the fair question of why
+        that range.
+      </p>
+      <p>
+        Four numbers come out of each calendar day: the typical mean temperature, the typical daytime high, the
+        typical overnight low, and the typical rainfall. February 29th gets dropped, since thirty years only holds
+        about eight of them and one spoke out of 365 is invisible anyway. (Leap day people, my apologies.) Every
+        poster is the same 365 day ring.
+      </p>
+
+      <h2>How to read one</h2>
+
+      <figure class="example">
+        <a href="/city/denver"><FingerprintPoster payload={denver} domain={domain} mode="tile" /></a>
+        <figcaption>Denver, which has the widest daily swing of any city on the wall.</figcaption>
+      </figure>
+
+      <ul class="key">
+        <li><b>Angle</b> is the day of the year. January at the top, running clockwise.</li>
+        <li><b>Distance from the center</b> is temperature. Warmer sits farther out.</li>
+        <li><b>Color</b> runs on temperature too, cool blue through warm red, so a hot city reads hot twice.</li>
+        <li><b>Thickness of the band</b> is the daily swing, from the typical overnight low out to the typical
+          afternoon high. Denver's band is thick. Singapore's is close to a wire.</li>
+        <li><b>The inner ring</b> is rainfall.</li>
+      </ul>
+
+      <p>
+        Two liberties, both worth admitting. Daily rainfall is noisy, so the inner ring is averaged across a
+        15 day window, otherwise it reads as static instead of a season. And it is drawn on a square root scale,
+        so a monsoon city does not flatten every dry city next to it into a flat line. Temperature gets neither
+        treatment. That part is raw.
+      </p>
+      <p>
+        The temperature scale is the same on every poster, which is what makes two of them honest to hold side by
+        side. It was set by the thirty cities on the wall, so if you type in somewhere more extreme than any of
+        them, the ring pins to the edge of the plot instead of quietly rescaling itself. Rare. But I would rather
+        say so here than have you find it.
+      </p>
+
+      <h2>What this is not</h2>
+      <p>
+        This is a portrait of a normal year. It is not an argument about change over time, and I want to be
+        direct about that rather than let the word climate do something I did not intend.
+      </p>
+      <p>
+        Thirty years averaged into one shape tells you what a place is typically like. It says nothing about
+        whether that shape is moving. A version that puts 1961 through 1990 next to 1991 through 2020 and shows
+        you the drift would be good and honest work, and I may build it. This is not that piece. This one holds
+        still.
+      </p>
+
+      <h2>Where the numbers come from</h2>
+      <p>
+        ERA5, delivered by <a href="https://open-meteo.com" rel="noopener">Open-Meteo</a>, free.
+      </p>
+      <p>
+        ERA5 is a <em>reanalysis</em>, which is a specific thing and not a fancier word for dataset. Take a modern
+        weather model, run it back across the historical record, and pull it into agreement with every observation
+        anyone captured at the time: ground stations, ships, buoys, balloons, satellites. What comes out is a
+        complete gridded version of the global atmosphere from 1940 forward, with no gaps, including over oceans
+        and over places nobody ever put a thermometer. The grid cells are roughly nine kilometers across, so a
+        poster describes the cell a city sits in rather than one instrument at its airport.
+      </p>
+      <p>
+        Open-Meteo serves that archive with no account, no key, and no cost, which is the only reason this is a
+        hobby project instead of a line item. Credit where it is owed: ERA5 comes from the
+        <a href="https://climate.copernicus.eu" rel="noopener">Copernicus Climate Change Service</a> and ECMWF,
+        and Open-Meteo does the delivery.
+      </p>
+      <p>
+        The thirty cities on the wall are computed once, when the site is built, and shipped as static files, so
+        they open instantly. Anything you type gets done live in your browser instead: one lookup to turn the name
+        into coordinates, one call for roughly eleven thousand daily records, then the same math the built-in
+        cities went through. You watch it develop for a second or two. The result is kept in your own browser so a
+        second visit is instant, and it never reaches a server of mine, because there is not one. If the archive
+        throttles the request you get a retry button rather than a wrong poster.
+      </p>
+
+      <h2>Who made this</h2>
+      <p>
+        Climate Fingerprint is a personal project by Dustin Cole, part of
+        <a href="https://dustincoledata.com" rel="noopener">dustincoledata</a>.
+      </p>
+      <p>
+        I am not an engineer. I work in analytics, and the way this got built is that I direct coding agents,
+        mostly Claude, and then verify what comes back. That second half is the actual job. Every ring on this
+        site sat slightly off center in its frame for a while, which read as perfectly correct in the code and was
+        obvious the moment anybody looked at a screenshot. So I look at screenshots.
+      </p>
+
+      <p class="close">
+        Thirty years of a city is about eleven thousand days, and nobody remembers eleven thousand days. You
+        remember that August is unbearable, or that the rain shows up in November and stays. That impression is
+        real statistics, run badly, on a sample you happened to live through. This just runs them properly and
+        hands you the picture.
+      </p>
+
+      <p class="back"><a href="/">Back to the wall</a></p>
+    </article>
+  </main>
+
+  <style>
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: clamp(24px, 5vw, 48px) 24px 80px;
+    }
+    article {
+      max-width: 62ch;
+      margin: 0 auto;
+      font-family: var(--sans);
+      color: var(--ink);
+    }
+
+    h1 {
+      margin: 0 0 0.8rem;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      letter-spacing: 0.01em;
+    }
+    h2 {
+      margin: 2.6rem 0 0.7rem;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(1.15rem, 2.4vw, 1.35rem);
+    }
+
+    /* Softer than ink, but mixed toward the ground rather than taken from --muted: --muted is a caption tone
+       (5.3:1 on dark, fine for a line under a tile) and nine paragraphs set in it read dim. This lands at 10:1. */
+    p {
+      margin: 0 0 1.05rem;
+      font-size: 1.02rem;
+      line-height: 1.72;
+      color: color-mix(in oklab, var(--ink) 82%, var(--bg));
+    }
+    /* The lead and the closing thought sit in full ink: the first line has to land, and the last one is the
+       point of the page rather than an appendix to it. */
+    .lead, .close { color: var(--ink); }
+    .lead { font-size: 1.1rem; }
+    .close { margin-top: 2.4rem; }
+
+    em { font-style: normal; color: var(--ink); }
+    a { color: var(--ink); text-decoration-color: var(--hair); text-underline-offset: 3px; }
+    a:hover { text-decoration-color: currentColor; }
+
+    /* One real poster, because a list of encoding rules with no picture beside it is words about a drawing. */
+    .example {
+      margin: 1.6rem auto 1.8rem;
+      max-width: 320px;
+      text-align: center;
+    }
+    .example a {
+      display: block;
+      border: 1px solid var(--hair);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.28s ease;
+    }
+    .example a:hover { border-color: color-mix(in oklab, var(--ink) 30%, transparent); }
+    .example :global(svg) { display: block; width: 100%; height: auto; }
+    figcaption {
+      margin-top: 0.6rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .key { margin: 0 0 1.05rem; padding-left: 1.1rem; }
+    .key li {
+      margin-bottom: 0.5rem;
+      font-size: 1.02rem;
+      line-height: 1.72;
+      color: color-mix(in oklab, var(--ink) 82%, var(--bg));
+    }
+    .key b { font-weight: 600; color: var(--ink); }
+
+    .back {
+      margin: 2.6rem 0 0;
+      font-size: 0.95rem;
+    }
+    .back a { color: var(--muted); text-decoration: none; }
+    .back a:hover { color: var(--ink); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .example a { transition: none; }
+    }
+  </style>
+</body>
+</html>

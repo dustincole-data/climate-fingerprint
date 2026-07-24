@@ -1,8 +1,9 @@
 ---
 // src/components/Controls.astro
-// The persistent global control cluster (T05 §6): units and ground, present on the wall, the detail view and
-// the client shell. Deliberately two segmented toggles, not a settings panel — the poster comes first.
-// (The `about` item of T05 §6 waits on the /about page.)
+// The persistent global control cluster (T05 §6): units, ground, and a quiet about link, present on the wall,
+// the detail view, /about itself and the client shell. Deliberately two segmented toggles plus one link, not a
+// settings panel — the poster comes first.
+const onAbout = Astro.url.pathname.replace(/\/$/, '') === '/about';
 ---
 <div class="controls">
   <div class="seg" role="group" aria-label="Temperature and rainfall units">
@@ -13,6 +14,7 @@
     <button type="button" data-set-ground="dark" aria-pressed="true">Dark</button>
     <button type="button" data-set-ground="light" aria-pressed="false">Light</button>
   </div>
+  <a class="about" href="/about" aria-current={onAbout ? 'page' : undefined}>About</a>
 </div>
 
 <style is:global>
