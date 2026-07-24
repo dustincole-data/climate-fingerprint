@@ -9,6 +9,7 @@ import Boot from '../../components/Boot.astro';
 import Controls from '../../components/Controls.astro';
 import { readCitiesManifest, readCityPayload, readDomain } from '../../lib/data';
 import { cityStats } from '../../lib/poster';
+import { cToF, mmToIn } from '../../lib/units';
 
 export async function getStaticPaths() {
   const manifest = await readCitiesManifest();
@@ -22,7 +23,9 @@ export async function getStaticPaths() {
 const { payload, domain } = Astro.props as Awaited<ReturnType<typeof getStaticPaths>>[number]['props'];
 const title = `${payload.meta.name} — Climate Fingerprint`;
 const { annualMeanC, annualPrecipMm } = cityStats(payload);
-const description = `${payload.signature} — ${Math.round(annualMeanC)}°C avg, ${Math.round(annualPrecipMm)} mm/yr.`;
+// Imperial like the share card and the poster's own readout — this line sits directly under the card in a
+// share preview, and both have to agree with the units the site opens on.
+const description = `${payload.signature} — ${Math.round(cToF(annualMeanC))}°F avg, ${mmToIn(annualPrecipMm).toFixed(1)} in/yr.`;
 // Curated cities get a real per-city card (T08 §4); it's built by `npm run og` and never fetched at runtime.
 const ogImage = new URL(`og/${payload.meta.slug}.png`, Astro.site);
 ---

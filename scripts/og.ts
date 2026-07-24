@@ -14,6 +14,7 @@ import { formatHex, oklch } from 'culori';
 import { readCitiesManifest, readCityPayload, readDomain } from '../src/lib/data.ts';
 import { buildDayBands, buildPrecipRadii } from '../src/lib/poster.ts';
 import { angleForDoy, N } from '../src/lib/geometry.ts';
+import { cToF, mmToIn } from '../src/lib/units.ts';
 import type { CityManifestEntry, CityPayload, Domain } from '../src/lib/types.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -132,7 +133,9 @@ async function main() {
 
   for (const entry of manifest as CityManifestEntry[]) {
     const payload = await readCityPayload(entry.slug);
-    const readout = `avg ${Math.round(entry.summary.annual_mean_c)}°C · ${Math.round(entry.summary.annual_precip_mm)} mm/yr`;
+    // Imperial, and worded exactly like the poster's own readout (render.ts readoutImp): the card is the
+    // first thing a sharer sees of the site, and the site opens on °F (Boot.astro's default unit).
+    const readout = `${Math.round(cToF(entry.summary.annual_mean_c))}°F avg · ${mmToIn(entry.summary.annual_precip_mm).toFixed(1)} in/yr`;
     const tree = cardTree(entry.name, readout, ringSvgChildren(payload, domain));
     await writeFile(join(OUT, `${entry.slug}.png`), await render(tree, fonts));
   }

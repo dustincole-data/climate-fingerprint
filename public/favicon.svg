@@ -2,7 +2,17 @@
   <title>Climate Fingerprint</title>
   <!-- Denver's 1991-2020 normals, every fifteenth day: angle is the day of the year
        from January at the top, radius and color are temperature, spoke length is the
-       daily low-to-high swing. Sampled coarse and drawn fat so it survives 16px. -->
+       daily low-to-high swing. Sampled coarse and drawn fat so it survives 16px.
+
+       The ground stays dark even though near-white is now the page default, and the
+       OG cards followed the page. A favicon is the one surface where it should not:
+       the ramp's pale-neutral pivot (T04 §2, 13°C) has almost no contrast on
+       near-white, and the hairline the light ground uses to separate segments is
+       sub-pixel at 16px — so a light tile breaks the ring open through spring and
+       autumn. Dark also holds a stable silhouette on both light and dark tab bars,
+       and unlike a share card it never sits next to the page. Rendered and compared
+       at 16/20/32px before deciding. -->
+
   <rect width="32" height="32" rx="7" fill="#0B0E14"/>
   <g transform="translate(0, 16)" fill="none" stroke-width="3.1">
     <path d="M16.0 -11.0L16.0 -12.3" stroke="#307dc8"/><path d="M18.9 -10.8L19.2 -12.0" stroke="#2185cd"/><path d="M21.5 -9.8L22.2 -10.9" stroke="#1e88ce"/><path d="M23.9 -8.0L24.8 -9.0" stroke="#188fcf"/><path d="M25.7 -5.8L26.9 -6.5" stroke="#1593cf"/><path d="M27.3 -3.3L28.7 -3.7" stroke="#28afd1"/><path d="M27.8 -0.3L29.4 -0.3" stroke="#35b7d1"/><path d="M27.7 2.8L29.0 3.1" stroke="#3fbbcd"/><path d="M26.8 5.8L27.8 6.4" stroke="#60c4c5"/><path d="M25.2 8.6L26.3 9.6" stroke="#bed9b5"/><path d="M22.8 10.9L23.6 12.1" stroke="#ccd293"/><path d="M19.9 12.5L20.3 13.9" stroke="#edc06d"/><path d="M16.6 13.4L16.6 14.8" stroke="#f0a54e"/><path d="M13.1 13.2L12.8 14.6" stroke="#f09a45"/><path d="M9.9 12.0L9.3 13.2" stroke="#f0a34c"/><path d="M7.0 10.0L6.2 11.0" stroke="#f0aa54"/><path d="M4.9 7.3L3.6 8.1" stroke="#efaf59"/><path d="M3.7 4.1L2.3 4.6" stroke="#d3ce88"/><path d="M3.3 0.8L1.9 0.9" stroke="#bed8b1"/><path d="M3.9 -2.4L2.5 -2.7" stroke="#89cebd"/><path d="M5.2 -5.2L3.9 -5.9" stroke="#32b6d1"/><path d="M7.2 -7.6L6.2 -8.4" stroke="#17a1d1"/><path d="M9.5 -9.4L8.8 -10.5" stroke="#1692cf"/><path d="M12.2 -10.5L11.8 -11.8" stroke="#1e87cd"/><path d="M15.0 -11.1L14.9 -12.4" stroke="#2982cb"/>
