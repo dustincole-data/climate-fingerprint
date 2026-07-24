@@ -80,7 +80,7 @@ const precipMmSecondary = Math.round(annualPrecipMm);
 
   <path d={precipPath} fill="var(--precip)" fill-opacity={dark ? 0.5 : 0.55} />
 
-  <g filter="url(#glow)" stroke={dark ? 'none' : 'rgba(30,25,20,0.16)'} stroke-width={dark ? 0 : 0.5}>
+  <g transform={`translate(${CX}, ${CY})`} filter="url(#glow)" stroke={dark ? 'none' : 'rgba(30,25,20,0.16)'} stroke-width={dark ? 0 : 0.5}>
     {bands.map((b, i) => {
       const a0 = angleForDoy(i + 1) - dayArc * 0.6;
       const a1 = angleForDoy(i + 1) + dayArc * 0.6;
