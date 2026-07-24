@@ -1,0 +1,165 @@
+---
+// src/pages/404.astro
+// The shared shell for every non-curated /city/<slug> (T07 §3): the slug is geocoded and its normals are
+// computed in the browser, through the same renderer the prerendered 30 use. Astro static serves this file
+// for any path with no prerendered page, in dev and on Vercel alike, so the long-tail needs no serverless
+// route. (Slice 9 note: a vercel.json rewrite of /city/* to this shell would upgrade the 404 status to 200.)
+import '../styles/global.css';
+import SearchField from '../components/SearchField.astro';
+import { readDomain } from '../lib/data';
+
+const domain = await readDomain();
+---
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Climate Fingerprint</title>
+  <meta name="robots" content="noindex" />
+</head>
+<body data-ground="dark">
+  <header class="bar">
+    <a class="home" href="/">Climate Fingerprint</a>
+    <SearchField />
+  </header>
+
+  <main class="shell" id="shell" aria-live="polite"></main>
+
+  <script type="application/json" id="cf-domain" set:html={JSON.stringify(domain)}></script>
+
+  <script>
+    import { renderPosterSvg } from '../lib/render';
+    import { loadTypedCity } from '../lib/ondemand';
+    import { deslugify, titleCase } from '../lib/slug';
+    import type { Domain } from '../lib/types';
+
+    const domain: Domain = JSON.parse(document.getElementById('cf-domain')!.textContent!);
+    const shell = document.getElementById('shell')!;
+    const escape = (text: string) =>
+      text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    function show(html: string) { shell.innerHTML = html; }
+
+    function note(title: string, body: string, action = '') {
+      return `<div class="msg"><p class="lead">${escape(title)}</p><p class="sub">${escape(body)}</p>${action}</div>`;
+    }
+
+    /** Loading: the ring's own shape, drawn empty and breathing, rather than a foreign spinner (T04 §states). */
+    function loading(city: string) {
+      return `<div class="msg">
+        <div class="skeleton" role="presentation"><span></span></div>
+        <p class="lead">Developing ${escape(city)}'s fingerprint…</p>
+      </div>`;
+    }
+
+    async function main() {
+      const match = location.pathname.match(/^\/city\/([^/]+)\/?$/);
+      if (!match) {
+        document.title = 'Not found — Climate Fingerprint';
+        show(note('That page does not exist.', 'Try the wall, or type any city above.',
+          '<p class="sub"><a class="back" href="/">Back to the wall</a></p>'));
+        return;
+      }
+
+      const slug = match[1];
+      const typed = titleCase(deslugify(slug));
+      document.title = `${typed} — Climate Fingerprint`;
+      show(loading(typed));
+
+      const result = await loadTypedCity(slug);
+
+      if (result.status === 'offline') {
+        show(note('You are offline.', 'Cities you have already opened still work. This one needs the climate archive.'));
+        return;
+      }
+      if (result.status === 'error') {
+        show(note("Couldn't reach the climate archive.", 'The weather record didn\'t load. Try again in a moment.',
+          '<p class="sub"><button class="retry" type="button">Retry</button></p>'));
+        shell.querySelector('.retry')?.addEventListener('click', () => main());
+        return;
+      }
+      if (result.status === 'not-found') {
+        show(note(`No city called "${result.query}" found.`, 'Try a nearby larger city.',
+          '<p class="sub"><a class="back" href="/">Back to the wall</a></p>'));
+        return;
+      }
+
+      const { payload, years } = result;
+      const place = [payload.meta.name, payload.meta.region, payload.meta.country].filter(Boolean).join(', ');
+      document.title = `${payload.meta.name} — Climate Fingerprint`;
+      const method = years >= payload.meta.window.years - 1
+        ? `Typical ${payload.meta.window.start}–${payload.meta.window.end} climate, from about ${payload.meta.window.years} years of daily records.`
+        : `Based on about ${years} years of records.`;
+
+      show(`<div class="poster-stage">${renderPosterSvg(payload, domain, { ground: 'dark', mode: 'full' })}</div>
+        <div class="readout">
+          <p class="resolved">${escape(place)}</p>
+          <p class="sub">Not the right place? Add a state or country.</p>
+          <p class="sub">${escape(method)}</p>
+        </div>`);
+    }
+
+    main();
+  </script>
+
+  <!-- is:global, scoped by hand under #shell: every state below is injected as innerHTML at runtime, so it
+       never carries Astro's scoping attribute and a plain scoped block would not match it. -->
+  <style is:global>
+    #shell { padding-bottom: 64px; }
+    #shell .msg {
+      max-width: 40ch;
+      margin: clamp(48px, 12vh, 120px) auto 0;
+      padding: 0 24px;
+      text-align: center;
+    }
+    #shell .lead {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(1.2rem, 3vw, 1.5rem);
+      color: var(--ink);
+    }
+    #shell .sub {
+      margin: 0.6rem 0 0;
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+    #shell .readout { max-width: 44ch; margin: 0 auto; padding: 4px 24px 0; text-align: center; }
+    #shell .resolved {
+      margin: 0.2rem 0 0;
+      font-family: var(--sans);
+      font-size: 1rem;
+      color: var(--ink);
+      text-align: center;
+    }
+    #shell .sub .back, #shell .sub .retry {
+      font: inherit;
+      color: var(--ink);
+      background: transparent;
+      border: 1px solid var(--hair);
+      border-radius: 8px;
+      padding: 7px 13px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    #shell .sub .back:hover, #shell .sub .retry:hover { border-color: var(--muted); }
+
+    #shell .skeleton {
+      width: min(260px, 60vw);
+      aspect-ratio: 1;
+      margin: 0 auto 28px;
+      border-radius: 50%;
+      border: 10px solid var(--hair);
+      animation: breathe 1.8s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%, 100% { opacity: 0.35; transform: scale(0.97); }
+      50% { opacity: 0.85; transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #shell .skeleton { animation: none; opacity: 0.6; }
+    }
+  </style>
+</body>
+</html>

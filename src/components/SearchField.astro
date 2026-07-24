@@ -1,0 +1,30 @@
+---
+// src/components/SearchField.astro
+// The persistent search field (T05 §5): no live dropdown, no picker. Submit navigates to /city/<slug> —
+// curated slugs hit their prerendered page, everything else lands on the client shell.
+---
+<form class="search" role="search" data-search>
+  <input
+    type="search"
+    name="q"
+    autocomplete="off"
+    spellcheck="false"
+    aria-label="Search for a city"
+    placeholder="Type any city"
+  />
+  <button type="submit">Show me</button>
+</form>
+
+<script>
+  import { slugify } from '../lib/slug';
+
+  for (const form of document.querySelectorAll<HTMLFormElement>('form[data-search]')) {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const input = form.querySelector<HTMLInputElement>('input[name="q"]');
+      const slug = slugify(input?.value ?? '');
+      if (!slug) return;
+      window.location.href = `/city/${slug}`;
+    });
+  }
+</script>

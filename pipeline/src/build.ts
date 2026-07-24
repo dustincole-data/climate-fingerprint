@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { CURATED_CITIES, type CuratedCity } from './cities.ts';
 import { computeDomains } from '../../src/lib/geometry.ts';
 import { cityStats } from '../../src/lib/poster.ts';
+import { computeDays, round1, round2, WINDOW, type OpenMeteoDaily } from '../../src/lib/normals.ts';
 import type { CityPayload, CityDay, CityManifestEntry } from '../../src/lib/types.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -20,18 +21,6 @@ const ARCHIVE = 'https://archive-api.open-meteo.com/v1/archive';
 const SPACING_MS = 20_000;   // T02: a 30-yr call is weight-heavy — space live calls ~20s apart
 const BACKOFF_MS = 65_000;   // T02: retry HTTP 429 after ~65s, escalating per attempt
 const MAX_ATTEMPTS = 6;      // a spent hourly/daily quota never clears inside one run — fail loud, don't hang CI
-const WINDOW = { start: 1991, end: 2020, years: 30 } as const;
-
-// Non-leap 365-day frame (02-29 dropped, per T02); doy 1..365 in calendar order.
-const MONTH_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-const CALENDAR: { doy: number; md: string }[] = (() => {
-  const out: { doy: number; md: string }[] = [];
-  let doy = 1;
-  for (let m = 0; m < 12; m++)
-    for (let d = 1; d <= MONTH_DAYS[m]; d++)
-      out.push({ doy: doy++, md: `${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}` });
-  return out;
-})();
 
 interface RawFixture {
   requested: { lat: number; lon: number };
@@ -45,56 +34,6 @@ interface RawFixture {
 const SOURCE = 'Open-Meteo Historical Weather API (ERA5), archive-api.open-meteo.com, free/no-key';
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-const round1 = (x: number) => Math.round(x * 10) / 10;              // temps → 0.1 °C (matches fixtures)
-const round2 = (x: number) => Math.round(x * 100) / 100;           // precip → 0.01 mm (matches fixtures; keeps dry-city trace honest)
-const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
-/** Type-7 (linear-interpolation) percentile of a pre-sorted ascending array. */
-function percentile(sorted: number[], p: number): number {
-  if (sorted.length === 1) return sorted[0];
-  const idx = (sorted.length - 1) * p;
-  const lo = Math.floor(idx), hi = Math.ceil(idx);
-  return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
-}
-
-interface OpenMeteoDaily {
-  time: string[];
-  temperature_2m_mean: (number | null)[];
-  temperature_2m_max: (number | null)[];
-  temperature_2m_min: (number | null)[];
-  precipitation_sum: (number | null)[];
-}
-
-/** Day-of-year normals from ~11k daily rows: per-md mean of mean/max/min + interannual p10/p90; precip mean + p90.
- *  Missing values are averaged over the years that have them (never fabricated); `n` records the sample count. */
-function computeDays(daily: OpenMeteoDaily): CityDay[] {
-  const buckets = new Map<string, { tmean: number[]; tmax: number[]; tmin: number[]; p: number[] }>();
-  for (let i = 0; i < daily.time.length; i++) {
-    const md = daily.time[i].slice(5);
-    if (md === '02-29') continue;
-    let b = buckets.get(md);
-    if (!b) { b = { tmean: [], tmax: [], tmin: [], p: [] }; buckets.set(md, b); }
-    const tm = daily.temperature_2m_mean[i], tx = daily.temperature_2m_max[i], tn = daily.temperature_2m_min[i], pr = daily.precipitation_sum[i];
-    if (tm != null) b.tmean.push(tm);
-    if (tx != null) b.tmax.push(tx);
-    if (tn != null) b.tmin.push(tn);
-    if (pr != null) b.p.push(pr);
-  }
-  return CALENDAR.map(({ doy, md }) => {
-    const b = buckets.get(md)!;
-    const sortedT = [...b.tmean].sort((x, y) => x - y);
-    const sortedP = [...b.p].sort((x, y) => x - y);
-    return {
-      doy, md, n: b.tmean.length,
-      t_mean: round1(mean(b.tmean)),
-      t_max_mean: round1(mean(b.tmax)),
-      t_min_mean: round1(mean(b.tmin)),
-      t_p10: round1(percentile(sortedT, 0.10)),
-      t_p90: round1(percentile(sortedT, 0.90)),
-      precip_mean: round2(mean(b.p)),
-      precip_p90: round2(percentile(sortedP, 0.90)),
-    };
-  });
-}
 
 interface ArchiveResponse {
   latitude: number; longitude: number; elevation: number; timezone: string;

@@ -9,3 +9,48 @@ html, body { margin: 0; background: var(--bg); }
 body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 .poster-stage { display: flex; justify-content: center; padding: 24px; }
 .poster-stage svg { width: min(720px, 94vw); height: auto; }
+
+/* Search field — persistent on the wall, the detail view and the client shell (T05 §5). */
+.search { display: flex; gap: 8px; justify-content: center; }
+.search input {
+  width: min(280px, 52vw);
+  padding: 8px 12px;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+}
+.search input::placeholder { color: var(--muted); }
+.search input:focus-visible, .search button:focus-visible { outline: 2px solid var(--precip); outline-offset: 2px; }
+.search button {
+  padding: 8px 14px;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.search button:hover { border-color: var(--muted); }
+
+/* Slim header on the detail view + client shell — back to the wall, and search from anywhere. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 20px 24px 4px;
+}
+.bar .home {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+.bar .home:hover { color: var(--muted); }

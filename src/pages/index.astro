@@ -2,6 +2,7 @@
 // src/pages/index.astro — the gallery wall (slice 2)
 import '../styles/global.css';
 import FingerprintPoster from '../components/FingerprintPoster.astro';
+import SearchField from '../components/SearchField.astro';
 import { readCitiesManifest, readCityPayload, readDomain } from '../lib/data';
 
 // Wall order = manifest order (curated registry order): max-contrast, fixed, designed — never random-per-load (T05 §gallery).
@@ -13,7 +14,8 @@ const cities = await Promise.all(
 );
 
 const title = 'Climate Fingerprint';
-const lead = 'Every city has a climate fingerprint: the shape of its typical year.';
+// The locked lead in full — slice 2 held back "Type one in." until the search field existed (T05 §copy).
+const lead = 'Every city has a climate fingerprint: the shape of its typical year. Type one in.';
 const description =
   "A city's typical year as one radial signature: about thirty years of daily temperature and rainfall, averaged into one poster.";
 ---
@@ -28,6 +30,7 @@ const description =
   <header class="masthead">
     <h1>{title}</h1>
     <p>{lead}</p>
+    <SearchField />
   </header>
 
   <main class="wall">
@@ -58,7 +61,7 @@ const description =
       letter-spacing: 0.01em;
     }
     .masthead p {
-      margin: 0.6rem auto 0;
+      margin: 0.6rem auto 1.4rem;
       max-width: 36ch;
       font-family: var(--sans);
       color: var(--muted);

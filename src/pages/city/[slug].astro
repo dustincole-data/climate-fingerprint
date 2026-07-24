@@ -2,6 +2,7 @@
 // src/pages/city/[slug].astro
 import '../../styles/global.css';
 import FingerprintPoster from '../../components/FingerprintPoster.astro';
+import SearchField from '../../components/SearchField.astro';
 import { readCitiesManifest, readCityPayload, readDomain } from '../../lib/data';
 
 export async function getStaticPaths() {
@@ -23,6 +24,10 @@ const title = `${payload.meta.name} — Climate Fingerprint`;
   <title>{title}</title>
 </head>
 <body data-ground="dark">
+  <header class="bar">
+    <a class="home" href="/">Climate Fingerprint</a>
+    <SearchField />
+  </header>
   <main class="poster-stage">
     <FingerprintPoster payload={payload} domain={domain} ground="dark" />
   </main>
