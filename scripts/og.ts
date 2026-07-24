@@ -12,7 +12,7 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import { formatHex, oklch } from 'culori';
 import { readCitiesManifest, readCityPayload, readDomain } from '../src/lib/data.ts';
-import { buildDayBands, buildPrecipRadii, rTemp } from '../src/lib/poster.ts';
+import { buildDayBands, buildPrecipRadii } from '../src/lib/poster.ts';
 import { angleForDoy, N } from '../src/lib/geometry.ts';
 import type { CityManifestEntry, CityPayload, Domain } from '../src/lib/types.ts';
 
@@ -20,16 +20,19 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'public', 'og');
 const W = 1200, H = 630;
 
-// The card's ring is the same rTemp/buildDayBands/buildPrecipRadii math the live poster draws from (one
+// The card's ring is the same buildDayBands/buildPrecipRadii math the live poster draws from (one
 // source of truth across poster, exports and OG), scaled down and recentered into the card's left half.
 const CX = 300, CY = H / 2;
 const K = 260 / 430; // poster's R_OUT (430) -> this card's ring radius (260)
 
-// Dark-ground tokens (tokens.css :root, T04 §2) baked to sRGB hex — resvg/satori don't honor oklch().
-const BG = formatHex(oklch('oklch(20% .02 250)'))!;
-const INK = '#efece4';
-const MUTED = '#8f8b83';
-const HALO = INK; // a neutral spotlight glow reads on every city's palette; T04 doesn't tie the halo hue to data.
+// Light-ground tokens (tokens.css :root) baked to sRGB hex — resvg/satori don't honor oklch(). The card
+// follows the site's default ground: a dark share image landing next to a near-white page reads as a
+// different product. The dark ground's halo comes with it — a spotlight glow needs dark to read, so on
+// near-white it is dropped and the light ground's hairline does the segment separation instead (T04 §2).
+const BG = formatHex(oklch('oklch(98.6% .002 250)'))!;
+const INK = '#241f1a';
+const MUTED = '#736c62';
+const SEG_STROKE = 'rgba(30,25,20,0.16)';
 
 const bake = (oklchString: string): string => formatHex(oklch(oklchString)) ?? INK;
 
@@ -61,7 +64,6 @@ function ringSvgChildren(payload: CityPayload, domain: Domain) {
   }
   precipD += 'Z';
 
-  const haloR = rTemp(domain.tmax, domain) * K * 1.55;
   const dayPaths = bands.map((b, i) => {
     const a0 = angleForDoy(i + 1) - dayArc * 0.6;
     const a1 = angleForDoy(i + 1) + dayArc * 0.6;
@@ -72,21 +74,11 @@ function ringSvgChildren(payload: CityPayload, domain: Domain) {
     const d = `M${x0a.toFixed(1)},${y0a.toFixed(1)} L${x1a.toFixed(1)},${y1a.toFixed(1)} `
       + `A${r1.toFixed(1)},${r1.toFixed(1)} 0 ${large} 1 ${x1b.toFixed(1)},${y1b.toFixed(1)} `
       + `L${x0b.toFixed(1)},${y0b.toFixed(1)} A${r0.toFixed(1)},${r0.toFixed(1)} 0 ${large} 0 ${x0a.toFixed(1)},${y0a.toFixed(1)} Z`;
-    return { type: 'path', props: { d, fill: bake(b.fill) } };
+    return { type: 'path', props: { d, fill: bake(b.fill), stroke: SEG_STROKE, 'stroke-width': 0.5 } };
   });
 
   return [
-    {
-      type: 'defs', props: { children: [{
-        type: 'radialGradient', props: { id: 'halo', cx: '50%', cy: '50%', r: '50%', children: [
-          { type: 'stop', props: { offset: '0%', 'stop-color': HALO, 'stop-opacity': 0.22 } },
-          { type: 'stop', props: { offset: '55%', 'stop-color': HALO, 'stop-opacity': 0.09 } },
-          { type: 'stop', props: { offset: '100%', 'stop-color': HALO, 'stop-opacity': 0 } },
-        ] },
-      }] },
-    },
-    { type: 'circle', props: { cx: CX, cy: CY, r: haloR, fill: 'url(#halo)' } },
-    { type: 'path', props: { d: precipD, fill: bake('oklch(72% .075 235)'), 'fill-opacity': 0.5 } },
+    { type: 'path', props: { d: precipD, fill: bake('oklch(52% .09 240)'), 'fill-opacity': 0.55 } },
     ...dayPaths,
   ];
 }

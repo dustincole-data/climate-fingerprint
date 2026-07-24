@@ -23,7 +23,10 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
    render.ts emits one ground-agnostic SVG; everything that differs between dark and light resolves here,
    so a toggle click restyles the detail poster and every wall tile at once with no re-render. */
 .cf-ring { stroke: var(--seg-stroke); stroke-width: var(--seg-sw); }
-:root[data-ground="light"] .cf-ring { filter: none; }   /* the Bremer halo needs dark to read */
+/* The Bremer halo needs dark to read, and dark is no longer the default — so the glow attribute render.ts
+   emits is switched OFF unless the dark ground is explicitly on. `:not()` rather than `[data-ground="light"]`
+   because a no-JS page carries no attribute at all, and no-JS must land on the same ground as everyone else. */
+:root:not([data-ground="dark"]) .cf-ring { filter: none; }
 .cf-precip { fill-opacity: var(--precip-op); }
 .cf-vig-stop { stop-opacity: var(--vig-op); }
 

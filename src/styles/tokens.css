@@ -1,19 +1,24 @@
+/* Near-white is the default ground. T04 §2 shipped dark-default with the white toggle as the shipped
+   alternative; both were always first-class, and the default is the one that matches how these posters are
+   actually used — printed, framed, and read on paper. Dark stays a full citizen behind the toggle. */
 :root {
-  --bg: oklch(20% .02 250);
-  --ink: #efece4;
-  --muted: #8f8b83;
-  --hair: rgba(239,236,228,.16);
-  --iso: rgba(239,236,228,.085);
-  --precip: oklch(72% .075 235);
+  --bg: oklch(98.6% .002 250);
+  --ink: #241f1a;
+  /* T04 §2 specced #7d766c, which measures 4.31:1 on this near-white ground — under AA for the masthead lead
+     and every caption that uses it. Darkened to the nearest tone that clears 4.5 with headroom (4.98:1). */
+  --muted: #736c62;
+  --hair: rgba(36,31,26,.18);
+  --iso: rgba(36,31,26,.075);
+  --precip: oklch(52% .09 240);
   --serif: 'IBM Plex Serif', Georgia, serif;
   --sans: 'IBM Plex Sans', system-ui, sans-serif;
 
   /* Ground-dependent poster structure (T04 §2). These live as tokens rather than baked SVG attributes so the
      live dark/light toggle restyles the detail poster and all 30 wall tiles without re-rendering anything. */
-  --seg-stroke: none;          /* dark: the glow carries segment separation */
-  --seg-sw: 0;
-  --vig-op: .34;
-  --precip-op: .5;
+  --seg-stroke: rgba(30,25,20,.16);   /* light: a hairline keeps pale mid-temps legible on white */
+  --seg-sw: .5;
+  --vig-op: .05;
+  --precip-op: .55;
 
   /* Poster type scale, in SVG user units. The poster scales as a whole, so on a narrow viewport these are the
      only sizes allowed to grow: below ~0.4 scale a 15px month label renders under 6px (T04 §6 legibility floor). */
@@ -27,20 +32,18 @@
   --foot-size: 14.5px;
 }
 
-:root[data-ground="light"] {
-  --bg: oklch(98.6% .002 250);
-  --ink: #241f1a;
-  /* T04 §2 specced #7d766c, which measures 4.31:1 on this near-white ground — under AA for the masthead lead
-     and every caption that uses it. Darkened to the nearest tone that clears 4.5 with headroom (4.98:1). */
-  --muted: #736c62;
-  --hair: rgba(36,31,26,.18);
-  --iso: rgba(36,31,26,.075);
-  --precip: oklch(52% .09 240);
+:root[data-ground="dark"] {
+  --bg: oklch(20% .02 250);
+  --ink: #efece4;
+  --muted: #8f8b83;
+  --hair: rgba(239,236,228,.16);
+  --iso: rgba(239,236,228,.085);
+  --precip: oklch(72% .075 235);
 
-  --seg-stroke: rgba(30,25,20,.16);   /* light: a hairline keeps pale mid-temps legible on white */
-  --seg-sw: .5;
-  --vig-op: .05;
-  --precip-op: .55;
+  --seg-stroke: none;          /* dark: the glow carries segment separation */
+  --seg-sw: 0;
+  --vig-op: .34;
+  --precip-op: .5;
 }
 
 /* The narrow-viewport bumps answer a rendered-size legibility floor, and an A4 300dpi export has none — so

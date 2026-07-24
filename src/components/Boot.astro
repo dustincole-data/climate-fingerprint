@@ -1,7 +1,7 @@
 ---
 // src/components/Boot.astro
 // Goes in <head>, runs before first paint. Applies the visitor's stored ground/unit choice to <html> so a
-// light-mode return visit never flashes the dark default, and picks the reveal duration: the first poster of
+// dark-mode return visit never flashes the light default, and picks the reveal duration: the first poster of
 // a session blooms at 800ms, later ones at 400ms so browsing doesn't drag (T04 §5).
 // is:inline is required — a bundled module would be deferred, and the flash is exactly what we are avoiding.
 // Also carries the favicon link, since this is the one component every page's <head> already includes.
@@ -10,9 +10,9 @@
 <script is:inline>
   (function () {
     var root = document.documentElement;
-    var ground = 'dark', units = 'imperial', dur = '800ms';
+    var ground = 'light', units = 'imperial', dur = '800ms';
     try {
-      if (localStorage.getItem('cf:ground') === 'light') ground = 'light';
+      if (localStorage.getItem('cf:ground') === 'dark') ground = 'dark';
       if (localStorage.getItem('cf:units') === 'metric') units = 'metric';
     } catch (e) { /* private mode or blocked storage: the defaults still apply */ }
     try {

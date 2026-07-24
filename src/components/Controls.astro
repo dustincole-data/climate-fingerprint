@@ -11,8 +11,8 @@ const onAbout = Astro.url.pathname.replace(/\/$/, '') === '/about';
     <button type="button" data-set-units="metric" aria-pressed="false"><abbr title="Celsius and millimetres">°C</abbr></button>
   </div>
   <div class="seg" role="group" aria-label="Poster ground">
-    <button type="button" data-set-ground="dark" aria-pressed="true">Dark</button>
-    <button type="button" data-set-ground="light" aria-pressed="false">Light</button>
+    <button type="button" data-set-ground="light" aria-pressed="true">Light</button>
+    <button type="button" data-set-ground="dark" aria-pressed="false">Dark</button>
   </div>
   <a class="about" href="/about" aria-current={onAbout ? 'page' : undefined}>About</a>
 </div>
