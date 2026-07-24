@@ -17,6 +17,7 @@ const domain = await readDomain();
 const title = 'About — Climate Fingerprint';
 const description =
   'How a climate fingerprint is computed: 1991 to 2020 day-of-year normals from ERA5, served by Open-Meteo, drawn as one radial poster per city.';
+const ogImage = new URL('og/_default.png', Astro.site);
 ---
 <html lang="en">
 <head>
@@ -24,6 +25,11 @@ const description =
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={ogImage} />
+  <meta name="twitter:card" content="summary_large_image" />
   <Boot />
 </head>
 <body>

@@ -20,6 +20,9 @@ const title = 'Climate Fingerprint';
 const lead = 'Every city has a climate fingerprint: the shape of its typical year. Type one in.';
 const description =
   "A city's typical year as one radial signature: about thirty years of daily temperature and rainfall, averaged into one poster.";
+// No build-time page exists for an arbitrary (typed) city (T07), so the wall and every non-city page share
+// one generic branded card rather than a per-city one (T08 §4).
+const ogImage = new URL('og/_default.png', Astro.site);
 ---
 <html lang="en">
 <head>
@@ -27,6 +30,11 @@ const description =
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={ogImage} />
+  <meta name="twitter:card" content="summary_large_image" />
   <Boot />
 </head>
 <body>

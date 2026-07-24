@@ -1,5 +1,5 @@
 import type { CityPayload, Domain } from './types';
-import { cToF } from './units';
+import { cToF } from './units.ts';
 
 export const N = 365;
 export const MONTH_STARTS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];

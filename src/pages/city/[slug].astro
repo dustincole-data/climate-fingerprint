@@ -7,6 +7,7 @@ import SearchField from '../../components/SearchField.astro';
 import Boot from '../../components/Boot.astro';
 import Controls from '../../components/Controls.astro';
 import { readCitiesManifest, readCityPayload, readDomain } from '../../lib/data';
+import { cityStats } from '../../lib/poster';
 
 export async function getStaticPaths() {
   const manifest = await readCitiesManifest();
@@ -19,12 +20,22 @@ export async function getStaticPaths() {
 
 const { payload, domain } = Astro.props as Awaited<ReturnType<typeof getStaticPaths>>[number]['props'];
 const title = `${payload.meta.name} — Climate Fingerprint`;
+const { annualMeanC, annualPrecipMm } = cityStats(payload);
+const description = `${payload.signature} — ${Math.round(annualMeanC)}°C avg, ${Math.round(annualPrecipMm)} mm/yr.`;
+// Curated cities get a real per-city card (T08 §4); it's built by `npm run og` and never fetched at runtime.
+const ogImage = new URL(`og/${payload.meta.slug}.png`, Astro.site);
 ---
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={ogImage} />
+  <meta name="twitter:card" content="summary_large_image" />
   <Boot />
 </head>
 <body>
