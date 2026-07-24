@@ -66,17 +66,20 @@ const description =
       line-height: 1.5;
     }
 
+    /* 30 tiles = the designed ~6x5 wall (T06). Column counts are explicit, not auto-fill, so the
+       max-contrast neighbor pairs land where they were composed instead of reflowing per viewport. */
     .wall {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: clamp(16px, 2.6vw, 30px);
-      max-width: 760px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: clamp(14px, 1.8vw, 26px);
+      max-width: 1320px;
       margin: 0 auto;
-      padding: 8px 24px 64px;
+      padding: 8px 24px 72px;
     }
-    @media (max-width: 560px) {
-      .wall { grid-template-columns: 1fr; max-width: 420px; }
-    }
+    @media (max-width: 1200px) { .wall { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+    @media (max-width: 1000px) { .wall { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    @media (max-width: 760px)  { .wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 520px)  { .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 8px 16px 56px; } }
 
     .tile {
       display: block;
@@ -91,13 +94,24 @@ const description =
     .poster { display: block; }
     .poster :global(svg) { display: block; width: 100%; height: auto; }
 
-    .cap { display: block; padding: 12px 10px 16px; text-align: center; }
+    /* Fixed-height caption box: the hover reveal animates inside it, so no tile ever grows and
+       shoves its neighbours' row down (invisible at 4 tiles, a jolt across a 6-wide wall). */
+    .cap {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 66px;
+      padding: 4px 8px;
+      text-align: center;
+    }
     .cap .name {
       display: block;
       font-family: var(--serif);
       font-weight: 500;
       color: var(--ink);
-      font-size: 1.05rem;
+      font-size: 1rem;
+      line-height: 1.25;
     }
     .cap .feel {
       display: block;
