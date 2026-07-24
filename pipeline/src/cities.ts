@@ -1,13 +1,12 @@
 // pipeline/src/cities.ts
 
-/** A curated city gets its normals from ONE of two sources: a committed T02 probe fixture (the 4 seed cities,
- *  reused verbatim — never refetched) or an Open-Meteo build-time fetch from an explicit `pin` (the other 26). */
+/** A curated city's normals come from its committed fixture at `pipeline/fixtures/<slug>.json`. A city with no
+ *  fixture yet is fetched once from its `pin` and frozen there (build.ts) — CI itself never fetches. */
 export interface CuratedCity {
   slug: string; name: string; region: string; country: string; signature: string;
-  /** Reuse a committed T02 fixture in pipeline/fixtures/ — no fetch. */
-  fixture?: string;
   /** Explicit geocode pin — lat/lon + IANA tz. Sidesteps the geocoder name collisions (Cairo IL/GA/EG,
-   *  Melbourne FL/AU) that T06/T07 §2 warn against for the baked set; the archive fetch needs only these. */
+   *  Melbourne FL/AU) that T06/T07 §2 warn against for the baked set; the archive fetch needs only these.
+   *  Kept after freezing as provenance + the coordinates to refetch from. */
   pin?: { lat: number; lon: number; tz: string };
 }
 
@@ -15,11 +14,11 @@ export interface CuratedCity {
  *  Every neighbor is deliberately unlike the last (Phoenix beside Reykjavík, cold beside tropical) so each tile pops. */
 export const CURATED_CITIES: CuratedCity[] = [
   { slug: 'fairbanks', name: 'Fairbanks', region: 'AK', country: 'United States', signature: 'savage cold, endless-summer-light swing', pin: { lat: 64.8378, lon: -147.7164, tz: 'America/Anchorage' } },
-  { slug: 'singapore', name: 'Singapore', region: '', country: 'Singapore', fixture: 'singapore.json', signature: 'seasonless, hot, wet daily' },
+  { slug: 'singapore', name: 'Singapore', region: '', country: 'Singapore', signature: 'seasonless, hot, wet daily' },
   { slug: 'phoenix', name: 'Phoenix', region: 'AZ', country: 'United States', signature: 'relentless summer furnace', pin: { lat: 33.4484, lon: -112.0740, tz: 'America/Phoenix' } },
-  { slug: 'reykjavik', name: 'Reykjavík', region: '', country: 'Iceland', fixture: 'reykjavik.json', signature: 'cold, wet, low-drama, never warm' },
+  { slug: 'reykjavik', name: 'Reykjavík', region: '', country: 'Iceland', signature: 'cold, wet, low-drama, never warm' },
   { slug: 'miami', name: 'Miami', region: 'FL', country: 'United States', signature: 'hot, tropical, wet-season blooms', pin: { lat: 25.7617, lon: -80.1918, tz: 'America/New_York' } },
-  { slug: 'denver', name: 'Denver', region: 'CO', country: 'United States', fixture: 'denver.json', signature: 'mile-high, big daily swing, dry' },
+  { slug: 'denver', name: 'Denver', region: 'CO', country: 'United States', signature: 'mile-high, big daily swing, dry' },
   { slug: 'bangkok', name: 'Bangkok', region: '', country: 'Thailand', signature: 'hot, hard wet season', pin: { lat: 13.7563, lon: 100.5018, tz: 'Asia/Bangkok' } },
   { slug: 'minneapolis', name: 'Minneapolis', region: 'MN', country: 'United States', signature: 'brutal winter, warm summer, huge swing', pin: { lat: 44.9778, lon: -93.2650, tz: 'America/Chicago' } },
   { slug: 'dubai', name: 'Dubai', region: '', country: 'United Arab Emirates', signature: 'Gulf furnace, humid heat', pin: { lat: 25.2048, lon: 55.2708, tz: 'Asia/Dubai' } },
@@ -33,7 +32,7 @@ export const CURATED_CITIES: CuratedCity[] = [
   { slug: 'new-orleans', name: 'New Orleans', region: 'LA', country: 'United States', signature: 'hot, drenching wet season', pin: { lat: 29.9511, lon: -90.0715, tz: 'America/Chicago' } },
   { slug: 'salt-lake-city', name: 'Salt Lake City', region: 'UT', country: 'United States', signature: 'snowy-dry, four seasons', pin: { lat: 40.7608, lon: -111.8910, tz: 'America/Denver' } },
   { slug: 'cairo', name: 'Cairo', region: '', country: 'Egypt', signature: 'Old-World desert, mild winter', pin: { lat: 30.0444, lon: 31.2357, tz: 'Africa/Cairo' } },
-  { slug: 'melbourne', name: 'Melbourne', region: 'VIC', country: 'Australia', fixture: 'melbourne.json', signature: 'flipped seasons' },
+  { slug: 'melbourne', name: 'Melbourne', region: 'VIC', country: 'Australia', signature: 'flipped seasons' },
   { slug: 'houston', name: 'Houston', region: 'TX', country: 'United States', signature: 'hot, humid, heavy air', pin: { lat: 29.7604, lon: -95.3698, tz: 'America/Chicago' } },
   { slug: 'albuquerque', name: 'Albuquerque', region: 'NM', country: 'United States', signature: 'high-desert sun, cool nights', pin: { lat: 35.0844, lon: -106.6504, tz: 'America/Denver' } },
   { slug: 'london', name: 'London', region: '', country: 'United Kingdom', signature: 'famously gray, mild, drizzly', pin: { lat: 51.5074, lon: -0.1278, tz: 'Europe/London' } },

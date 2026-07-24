@@ -1,8 +1,10 @@
 // pipeline/src/build.ts
 // `npm run data` — build the curated 30's normals into public/data/*.json (gitignored, CI-generated).
-// The 4 T02 probe cities load from committed fixtures; the other 26 fetch 1991-2020 daily records from
-// Open-Meteo's ERA5 archive (free, no key, browserless), compute day-of-year normals, then all 30 share one
-// globally-fixed temp/precip domain (T04 §1) so tiles are comparable across the gallery wall.
+// Every curated city reads its committed fixture in pipeline/fixtures/; a city with no fixture yet is fetched
+// once from Open-Meteo's ERA5 archive (free, no key, browserless) and FROZEN there for commit. CI never fetches:
+// a cold build can't finish 26 weight-heavy 30-yr calls inside Open-Meteo's hourly cap, and 1991-2020 normals
+// never change, so refetching them per deploy was pure risk. All 30 then share one globally-fixed temp/precip
+// domain (T04 §1) so tiles are comparable across the gallery wall.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +14,7 @@ import { cityStats } from '../../src/lib/poster.ts';
 import type { CityPayload, CityDay, CityManifestEntry } from '../../src/lib/types.ts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const FIXTURE_DIR = join(ROOT, 'pipeline', 'fixtures');          // committed per-city normals — the only input CI reads
 const CACHE_DIR = join(ROOT, 'pipeline', '.cache', 'archive');   // raw responses cached (gitignored) so re-runs don't refetch
 const ARCHIVE = 'https://archive-api.open-meteo.com/v1/archive';
 const SPACING_MS = 20_000;   // T02: a 30-yr call is weight-heavy — space live calls ~20s apart
@@ -35,8 +38,11 @@ interface RawFixture {
   resolved: { lat: number; lon: number; elevation_m: number };
   timezone: string;
   window: { start: number; end: number; years: number };
+  source?: string;
   days: CityDay[];
 }
+
+const SOURCE = 'Open-Meteo Historical Weather API (ERA5), archive-api.open-meteo.com, free/no-key';
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 const round1 = (x: number) => Math.round(x * 10) / 10;              // temps → 0.1 °C (matches fixtures)
@@ -146,17 +152,34 @@ async function fetchArchive(c: CuratedCity): Promise<ArchiveResponse> {
   }
 }
 
-/** A curated city's raw normals: reuse its committed fixture, or fetch + compute from its pin. */
+/** A curated city's raw normals: its committed fixture, else a one-time fetch that is frozen into one.
+ *  A malformed fixture throws (never silently refetches) — the slice-3 lesson: both paths, one shape. */
 async function rawForCity(c: CuratedCity): Promise<RawFixture> {
-  if (c.fixture) return JSON.parse(await readFile(join(ROOT, 'pipeline', 'fixtures', c.fixture), 'utf8'));
+  const file = join(FIXTURE_DIR, `${c.slug}.json`);
+  let text: string | null = null;
+  try {
+    text = await readFile(file, 'utf8');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+  }
+  if (text !== null) return JSON.parse(text);
+
+  if (process.env.CI) throw new Error(`${c.slug}: no committed fixture at pipeline/fixtures/${c.slug}.json. `
+    + `CI never fetches Open-Meteo (its hourly cap can't serve a cold 26-city build) — run \`npm run data\` locally and commit the frozen fixture.`);
+  if (!c.pin) throw new Error(`${c.slug}: no fixture and no pin — add a pin { lat, lon, tz } to pipeline/src/cities.ts to fetch it.`);
+
   const j = await fetchArchive(c);
-  return {
-    requested: { lat: c.pin!.lat, lon: c.pin!.lon },
+  const raw: RawFixture = {
+    requested: { lat: c.pin.lat, lon: c.pin.lon },
     resolved: { lat: j.latitude, lon: j.longitude, elevation_m: j.elevation },
     timezone: j.timezone,
     window: { ...WINDOW },
+    source: SOURCE,
     days: computeDays(j.daily),
   };
+  await writeFile(file, JSON.stringify(raw));
+  console.log(`  froze      pipeline/fixtures/${c.slug}.json  (commit it — CI reads only fixtures)`);
+  return raw;
 }
 
 function toPayload(c: CuratedCity, raw: RawFixture): CityPayload {
