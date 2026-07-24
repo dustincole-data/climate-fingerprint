@@ -39,8 +39,11 @@
   --precip-op: .55;
 }
 
+/* The narrow-viewport bumps answer a rendered-size legibility floor, and an A4 300dpi export has none — so
+   the export flips [data-exporting] on for the instant it reads computed values and gets the poster scale
+   back (T04 §6). Synchronous, so this state is never painted. */
 @media (max-width: 560px) {
-  :root {
+  :root:not([data-exporting]) {
     --mo-size: 24px;
     --iso-size: 19px;
     --country-size: 18px;
@@ -50,7 +53,7 @@
 }
 
 @media (max-width: 420px) {
-  :root {
+  :root:not([data-exporting]) {
     --mo-size: 30px;
     --iso-size: 24px;
     --country-size: 20px;

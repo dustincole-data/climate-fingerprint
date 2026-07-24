@@ -35,6 +35,7 @@ const domain = await readDomain();
     import { renderPosterSvg } from '../lib/render';
     import { loadTypedCity } from '../lib/ondemand';
     import { deslugify, titleCase } from '../lib/slug';
+    import { exportRowHtml, wireExportRow } from '../lib/export';
     import type { Domain } from '../lib/types';
 
     const domain: Domain = JSON.parse(document.getElementById('cf-domain')!.textContent!);
@@ -100,9 +101,13 @@ const domain = await readDomain();
           <p class="resolved">${escape(place)}</p>
           <p class="sub">Not the right place? Add a state or country.</p>
           <p class="sub">${escape(method)}</p>
-        </div>`);
+        </div>
+        ${exportRowHtml()}`);
     }
 
+    // Delegated, so it is live for the row main() injects once the city's data lands (T08 §3: a typed city
+    // exports exactly like a curated one).
+    wireExportRow();
     main();
   </script>
 

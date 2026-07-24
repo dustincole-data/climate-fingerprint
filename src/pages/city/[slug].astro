@@ -2,6 +2,7 @@
 // src/pages/city/[slug].astro
 import '../../styles/global.css';
 import FingerprintPoster from '../../components/FingerprintPoster.astro';
+import ExportRow from '../../components/ExportRow.astro';
 import SearchField from '../../components/SearchField.astro';
 import Boot from '../../components/Boot.astro';
 import Controls from '../../components/Controls.astro';
@@ -32,8 +33,11 @@ const title = `${payload.meta.name} — Climate Fingerprint`;
     <SearchField />
     <Controls />
   </header>
-  <main class="poster-stage">
-    <FingerprintPoster payload={payload} domain={domain} />
+  <main>
+    <div class="poster-stage">
+      <FingerprintPoster payload={payload} domain={domain} />
+    </div>
+    <ExportRow />
   </main>
 </body>
 </html>

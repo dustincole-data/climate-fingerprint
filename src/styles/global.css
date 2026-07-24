@@ -30,9 +30,9 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
    is too small to read them (T04 §6). The rings themselves stay — they are texture, not type. */
 .cf-mo-init { display: none; }
 @media (max-width: 560px) {
-  .cf-mo-full { display: none; }
-  .cf-mo-init { display: inline; }
-  .cf-iso-alt { display: none; }
+  :root:not([data-exporting]) .cf-mo-full { display: none; }
+  :root:not([data-exporting]) .cf-mo-init { display: inline; }
+  :root:not([data-exporting]) .cf-iso-alt { display: none; }
 }
 
 /* ---- Poster: units (T05 §6) --------------------------------------------------------------------------
@@ -107,6 +107,41 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 }
 @media (prefers-reduced-motion: reduce) {
   .controls button { transition: none; }
+}
+
+/* ---- Export row (T05 §8) ------------------------------------------------------------------------------
+   A calm action row below the poster, never floating over the art: PNG is the button most people want, SVG
+   and the link are quiet next to it. */
+.export { padding: 10px 24px 64px; text-align: center; }
+.export .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+.export button {
+  padding: 11px 18px;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+.export .primary { color: var(--ink); border-color: var(--muted); }
+.export .quiet { padding: 11px 12px; border-color: transparent; }
+.export button:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); }
+.export button:disabled { cursor: progress; opacity: 0.55; }
+.export button:focus-visible { outline: 2px solid var(--precip); outline-offset: 2px; }
+.export .fine {
+  margin: 12px 0 0;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.export .status:not(:empty) { color: var(--ink); }
+.export .status:not(:empty)::before { content: '·'; margin: 0 0.5em; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) {
+  .export button { transition: none; }
 }
 
 /* Search field — persistent on the wall, the detail view and the client shell (T05 §5). */

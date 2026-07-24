@@ -1,0 +1,13 @@
+---
+// src/components/ExportRow.astro
+// Thin wrapper over src/lib/export.ts, mirroring FingerprintPoster: the markup lives in the lib so the client
+// shell can inject the identical row for a typed city (T05 §8). Styling is in global.css rather than here,
+// because that injected copy never carries Astro's scoping attribute.
+import { exportRowHtml } from '../lib/export';
+---
+<Fragment set:html={exportRowHtml()} />
+
+<script>
+  import { wireExportRow } from '../lib/export';
+  wireExportRow();
+</script>
