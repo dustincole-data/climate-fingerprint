@@ -10,6 +10,85 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .poster-stage { display: flex; justify-content: center; padding: 24px; }
 .poster-stage svg { width: min(720px, 94vw); height: auto; }
 
+/* ---- Poster: the parts that answer to the ground toggle (T04 §2) -------------------------------------
+   render.ts emits one ground-agnostic SVG; everything that differs between dark and light resolves here,
+   so a toggle click restyles the detail poster and every wall tile at once with no re-render. */
+.cf-ring { stroke: var(--seg-stroke); stroke-width: var(--seg-sw); }
+:root[data-ground="light"] .cf-ring { filter: none; }   /* the Bremer halo needs dark to read */
+.cf-precip { fill-opacity: var(--precip-op); }
+.cf-vig-stop { stop-opacity: var(--vig-op); }
+
+.cf-mo { font-size: var(--mo-size); }
+/* The halo scales with the type, so it stays a tight outline instead of a blob once mobile bumps the size. */
+.cf-iso-label { font-size: var(--iso-size); stroke-width: calc(var(--iso-size) * 0.32); }
+.cf-name { font-size: var(--name-size); }
+.cf-country { font-size: var(--country-size); }
+.cf-sig { font-size: var(--sig-size); }
+.cf-readout { font-size: var(--readout-size); }
+
+/* Month names shrink to initials, and the denser Fahrenheit grid sheds every second label, once the poster
+   is too small to read them (T04 §6). The rings themselves stay — they are texture, not type. */
+.cf-mo-init { display: none; }
+@media (max-width: 560px) {
+  .cf-mo-full { display: none; }
+  .cf-mo-init { display: inline; }
+  .cf-iso-alt { display: none; }
+}
+
+/* ---- Poster: units (T05 §6) --------------------------------------------------------------------------
+   Both systems ship inside the SVG and the toggle paints one. Imperial is the default, so it is also what
+   renders with no JS and no data-units attribute. */
+.cf-u-met { display: none; }
+:root[data-units="metric"] .cf-u-met { display: inline; }
+:root[data-units="metric"] .cf-u-imp { display: none; }
+
+/* ---- Poster: bloom-and-settle (T04 §5) ---------------------------------------------------------------
+   One reveal per full poster: the ring develops center-outward through a mask aperture while its color
+   eases in, then goes dead still. The mask ships fully open and no fill-mode is set, so any moment outside
+   the run — no CSS, paused animation, reduced motion, a headless render — shows the finished poster. */
+@keyframes cf-bloom-open { from { r: 150px; } to { r: 520px; } }
+@keyframes cf-bloom-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .cf-poster-full .cf-bloom-eye { animation: cf-bloom-open var(--bloom-dur, 800ms) cubic-bezier(.16, 1, .3, 1); }
+  .cf-poster-full .cf-bloom { animation: cf-bloom-in var(--bloom-dur, 800ms) cubic-bezier(.16, 1, .3, 1); }
+}
+
+/* ---- Global controls (T05 §6) ------------------------------------------------------------------------ */
+.controls { display: flex; gap: 8px; align-items: center; }
+.controls .seg {
+  display: flex;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.controls button {
+  padding: 7px 11px;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+.controls button + button { border-left: 1px solid var(--hair); }
+.controls button:hover { color: var(--ink); }
+.controls button:focus-visible { outline: 2px solid var(--precip); outline-offset: -2px; }
+/* Selected state is pure CSS off the root attribute, so it is correct on first paint rather than after the
+   controls script runs. The script only mirrors it into aria-pressed. */
+:root[data-units="imperial"] .controls [data-set-units="imperial"],
+:root[data-units="metric"] .controls [data-set-units="metric"],
+:root[data-ground="dark"] .controls [data-set-ground="dark"],
+:root[data-ground="light"] .controls [data-set-ground="light"] {
+  color: var(--ink);
+  background: color-mix(in oklab, var(--ink) 11%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .controls button { transition: none; }
+}
+
 /* Search field — persistent on the wall, the detail view and the client shell (T05 §5). */
 .search { display: flex; gap: 8px; justify-content: center; }
 .search input {

@@ -6,6 +6,8 @@
 // route. (Slice 9 note: a vercel.json rewrite of /city/* to this shell would upgrade the 404 status to 200.)
 import '../styles/global.css';
 import SearchField from '../components/SearchField.astro';
+import Boot from '../components/Boot.astro';
+import Controls from '../components/Controls.astro';
 import { readDomain } from '../lib/data';
 
 const domain = await readDomain();
@@ -16,11 +18,13 @@ const domain = await readDomain();
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Climate Fingerprint</title>
   <meta name="robots" content="noindex" />
+  <Boot />
 </head>
-<body data-ground="dark">
+<body>
   <header class="bar">
     <a class="home" href="/">Climate Fingerprint</a>
     <SearchField />
+    <Controls />
   </header>
 
   <main class="shell" id="shell" aria-live="polite"></main>
@@ -91,7 +95,7 @@ const domain = await readDomain();
         ? `Typical ${payload.meta.window.start}–${payload.meta.window.end} climate, from about ${payload.meta.window.years} years of daily records.`
         : `Based on about ${years} years of records.`;
 
-      show(`<div class="poster-stage">${renderPosterSvg(payload, domain, { ground: 'dark', mode: 'full' })}</div>
+      show(`<div class="poster-stage">${renderPosterSvg(payload, domain, { mode: 'full' })}</div>
         <div class="readout">
           <p class="resolved">${escape(place)}</p>
           <p class="sub">Not the right place? Add a state or country.</p>

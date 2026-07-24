@@ -1,0 +1,51 @@
+---
+// src/components/Controls.astro
+// The persistent global control cluster (T05 §6): units and ground, present on the wall, the detail view and
+// the client shell. Deliberately two segmented toggles, not a settings panel — the poster comes first.
+// (The `about` item of T05 §6 waits on the /about page.)
+---
+<div class="controls">
+  <div class="seg" role="group" aria-label="Temperature and rainfall units">
+    <button type="button" data-set-units="imperial" aria-pressed="true"><abbr title="Fahrenheit and inches">°F</abbr></button>
+    <button type="button" data-set-units="metric" aria-pressed="false"><abbr title="Celsius and millimetres">°C</abbr></button>
+  </div>
+  <div class="seg" role="group" aria-label="Poster ground">
+    <button type="button" data-set-ground="dark" aria-pressed="true">Dark</button>
+    <button type="button" data-set-ground="light" aria-pressed="false">Light</button>
+  </div>
+</div>
+
+<style is:global>
+  .controls abbr { text-decoration: none; }
+</style>
+
+<script>
+  // Boot.astro already applied the stored choice to <html> before paint and the selected styling is pure CSS
+  // off that attribute, so this script only owns writes: mirror the state into aria-pressed, and persist.
+  const root = document.documentElement;
+
+  function sync() {
+    for (const button of document.querySelectorAll<HTMLButtonElement>('[data-set-units]')) {
+      button.setAttribute('aria-pressed', String(button.dataset.setUnits === root.dataset.units));
+    }
+    for (const button of document.querySelectorAll<HTMLButtonElement>('[data-set-ground]')) {
+      button.setAttribute('aria-pressed', String(button.dataset.setGround === root.dataset.ground));
+    }
+  }
+
+  function choose(key: 'units' | 'ground', value: string) {
+    root.dataset[key] = value;
+    try { localStorage.setItem(`cf:${key}`, value); } catch { /* blocked storage: the choice still applies for this page */ }
+    sync();
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement | null;
+    const button = target?.closest<HTMLElement>('[data-set-units], [data-set-ground]');
+    if (!button) return;
+    if (button.dataset.setUnits) choose('units', button.dataset.setUnits);
+    else if (button.dataset.setGround) choose('ground', button.dataset.setGround!);
+  });
+
+  sync();
+</script>

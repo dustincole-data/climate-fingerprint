@@ -5,8 +5,8 @@
 import type { CityPayload, Domain } from '../lib/types';
 import { renderPosterSvg } from '../lib/render';
 
-interface Props { payload: CityPayload; domain: Domain; ground?: 'dark' | 'light'; mode?: 'full' | 'tile'; }
-const { payload, domain, ground = 'dark', mode = 'full' } = Astro.props as Props;
-const svg = renderPosterSvg(payload, domain, { ground, mode });
+interface Props { payload: CityPayload; domain: Domain; mode?: 'full' | 'tile'; }
+const { payload, domain, mode = 'full' } = Astro.props as Props;
+const svg = renderPosterSvg(payload, domain, { mode });
 ---
 <Fragment set:html={svg} />

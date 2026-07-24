@@ -3,6 +3,8 @@
 import '../styles/global.css';
 import FingerprintPoster from '../components/FingerprintPoster.astro';
 import SearchField from '../components/SearchField.astro';
+import Boot from '../components/Boot.astro';
+import Controls from '../components/Controls.astro';
 import { readCitiesManifest, readCityPayload, readDomain } from '../lib/data';
 
 // Wall order = manifest order (curated registry order): max-contrast, fixed, designed — never random-per-load (T05 §gallery).
@@ -25,8 +27,10 @@ const description =
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  <Boot />
 </head>
-<body data-ground="dark">
+<body>
+  <div class="topbar"><Controls /></div>
   <header class="masthead">
     <h1>{title}</h1>
     <p>{lead}</p>
@@ -36,7 +40,7 @@ const description =
   <main class="wall">
     {cities.map(({ entry, payload }) => (
       <a class="tile" href={`/city/${entry.slug}`} aria-label={`${entry.name} — ${entry.signature}`}>
-        <span class="poster"><FingerprintPoster payload={payload} domain={domain} ground="dark" mode="tile" /></span>
+        <span class="poster"><FingerprintPoster payload={payload} domain={domain} mode="tile" /></span>
         <span class="cap">
           <span class="name">{entry.name}</span>
           <span class="feel">{entry.signature}</span>
@@ -46,6 +50,15 @@ const description =
   </main>
 
   <style>
+    /* The wall has no wordmark bar to hang the controls off, so they get their own quiet right-aligned row. */
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 20px 24px 0;
+    }
+
     .masthead {
       max-width: 760px;
       margin: 0 auto;
@@ -91,7 +104,7 @@ const description =
       border-radius: 12px;
       overflow: hidden;
       background: var(--bg);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
       transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
     }
     .poster { display: block; }
@@ -129,10 +142,12 @@ const description =
     }
 
     @media (hover: hover) {
+      /* Mixed off --ink rather than a literal, so the lift still reads once the ground toggles to near-white. */
       .tile:hover {
         transform: translateY(-4px);
-        border-color: rgba(239, 236, 228, 0.3);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 24px rgba(239, 236, 228, 0.06);
+        border-color: color-mix(in oklab, var(--ink) 30%, transparent);
+        box-shadow: 0 10px 30px color-mix(in oklab, var(--bg) 55%, transparent),
+                    0 0 24px color-mix(in oklab, var(--ink) 7%, transparent);
       }
       .tile:hover .feel { max-height: 2.6em; margin-top: 3px; opacity: 1; }
     }

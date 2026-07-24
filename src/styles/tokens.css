@@ -7,7 +7,24 @@
   --precip: oklch(72% .075 235);
   --serif: 'IBM Plex Serif', Georgia, serif;
   --sans: 'IBM Plex Sans', system-ui, sans-serif;
+
+  /* Ground-dependent poster structure (T04 §2). These live as tokens rather than baked SVG attributes so the
+     live dark/light toggle restyles the detail poster and all 30 wall tiles without re-rendering anything. */
+  --seg-stroke: none;          /* dark: the glow carries segment separation */
+  --seg-sw: 0;
+  --vig-op: .34;
+  --precip-op: .5;
+
+  /* Poster type scale, in SVG user units. The poster scales as a whole, so on a narrow viewport these are the
+     only sizes allowed to grow: below ~0.4 scale a 15px month label renders under 6px (T04 §6 legibility floor). */
+  --mo-size: 15px;
+  --iso-size: 14px;
+  --name-size: 58px;
+  --country-size: 14.5px;
+  --sig-size: 15.5px;
+  --readout-size: 13.5px;
 }
+
 :root[data-ground="light"] {
   --bg: oklch(98.6% .002 250);
   --ink: #241f1a;
@@ -15,4 +32,29 @@
   --hair: rgba(36,31,26,.18);
   --iso: rgba(36,31,26,.075);
   --precip: oklch(52% .09 240);
+
+  --seg-stroke: rgba(30,25,20,.16);   /* light: a hairline keeps pale mid-temps legible on white */
+  --seg-sw: .5;
+  --vig-op: .05;
+  --precip-op: .55;
+}
+
+@media (max-width: 560px) {
+  :root {
+    --mo-size: 24px;
+    --iso-size: 19px;
+    --country-size: 18px;
+    --sig-size: 17px;
+    --readout-size: 17px;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --mo-size: 30px;
+    --iso-size: 24px;
+    --country-size: 20px;
+    --sig-size: 18px;
+    --readout-size: 19px;
+  }
 }
