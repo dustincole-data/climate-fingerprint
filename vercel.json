@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm run data && npm run og && npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/city/:slug", "destination": "/404.html" }
+  ]
+}
