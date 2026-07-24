@@ -6,12 +6,17 @@ import { N, MONTH_STARTS, MONTHS, angleForDoy, isothermValues } from '../lib/geo
 import { rTemp, buildDayBands, buildPrecipRadii, cityStats } from '../lib/poster';
 import { cToF, mmToIn } from '../lib/units';
 
-interface Props { payload: CityPayload; domain: Domain; ground?: 'dark' | 'light'; }
-const { payload, domain, ground = 'dark' } = Astro.props as Props;
+interface Props { payload: CityPayload; domain: Domain; ground?: 'dark' | 'light'; mode?: 'full' | 'tile'; }
+const { payload, domain, ground = 'dark', mode = 'full' } = Astro.props as Props;
 const dark = ground === 'dark';
+const full = mode === 'full';
+// Unique per-instance filter IDs so multiple posters in one document (the gallery wall) don't collide on url(#glow)/url(#vig).
+const uid = payload.meta.slug;
 
 const W = 1000, H = 1414, CX = 500, CY = 650;
 const R_OUT = 430, R_DISC = 140, R_PBASE = 160, R_MONTH = R_OUT + 46;
+// Full poster = portrait √2 with room for labels + identity. Tile = square crop tight on the ring (labels/readout are hidden anyway), so the mark fills the gallery cell.
+const viewBox = full ? `0 0 ${W} ${H}` : `${CX - 480} ${CY - 480} 960 960`;
 
 const bands = buildDayBands(payload, domain);
 const precipRadii = buildPrecipRadii(payload, domain);
@@ -53,14 +58,14 @@ const tempCSecondary = Math.round(annualMeanC);
 const precipInPrimary = mmToIn(annualPrecipMm).toFixed(1);
 const precipMmSecondary = Math.round(annualPrecipMm);
 ---
-<svg viewBox={`0 0 ${W} ${H}`} xmlns="http://www.w3.org/2000/svg" role="img"
+<svg viewBox={viewBox} xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label={`${payload.meta.name} climate fingerprint`} data-ground={ground}>
   <defs>
-    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <filter id={`glow-${uid}`} x="-25%" y="-25%" width="150%" height="150%">
       <feGaussianBlur stdDeviation={dark ? 6 : 0} result="b" />
       <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
     </filter>
-    <radialGradient id="vig" cx="50%" cy="45%" r="62%">
+    <radialGradient id={`vig-${uid}`} cx="50%" cy="45%" r="62%">
       <stop offset="60%" stop-color="#000" stop-opacity="0" />
       <stop offset="100%" stop-color="#000" stop-opacity={dark ? 0.34 : 0.05} />
     </radialGradient>
@@ -71,7 +76,7 @@ const precipMmSecondary = Math.round(annualPrecipMm);
     <circle cx={CX} cy={CY} r={rTemp(t, domain).toFixed(1)} fill="none" stroke="var(--iso)" stroke-width="1" />
   ))}
 
-  {monthTicks.map((m) => (
+  {full && monthTicks.map((m) => (
     <>
       <line x1={m.x0.toFixed(1)} y1={m.y0.toFixed(1)} x2={m.x1.toFixed(1)} y2={m.y1.toFixed(1)} stroke="var(--hair)" stroke-width="1.2" />
       <text x={m.lx.toFixed(1)} y={(m.ly + 4).toFixed(1)} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="15" letter-spacing="1">{m.name}</text>
@@ -80,7 +85,7 @@ const precipMmSecondary = Math.round(annualPrecipMm);
 
   <path d={precipPath} fill="var(--precip)" fill-opacity={dark ? 0.5 : 0.55} />
 
-  <g transform={`translate(${CX}, ${CY})`} filter="url(#glow)" stroke={dark ? 'none' : 'rgba(30,25,20,0.16)'} stroke-width={dark ? 0 : 0.5}>
+  <g transform={`translate(${CX}, ${CY})`} filter={`url(#glow-${uid})`} stroke={dark ? 'none' : 'rgba(30,25,20,0.16)'} stroke-width={dark ? 0 : 0.5}>
     {bands.map((b, i) => {
       const a0 = angleForDoy(i + 1) - dayArc * 0.6;
       const a1 = angleForDoy(i + 1) + dayArc * 0.6;
@@ -88,7 +93,7 @@ const precipMmSecondary = Math.round(annualPrecipMm);
     })}
   </g>
 
-  {isoLabels.map((l) => (
+  {full && isoLabels.map((l) => (
     <>
       <rect x={CX - 20} y={l.cy - 9} width="40" height="18" rx="3" fill="var(--bg)" fill-opacity="0.82" />
       <text x={CX} y={l.cy - 1} text-anchor="middle" fill="var(--ink)" font-family="var(--sans)" font-size="10.5">{l.f}°F</text>
@@ -96,11 +101,15 @@ const precipMmSecondary = Math.round(annualPrecipMm);
     </>
   ))}
 
-  <circle cx={CX} cy={CY} r={R_DISC} fill="var(--bg)" />
-  <text x={CX} y={CY - 12} text-anchor="middle" fill="var(--ink)" font-family="var(--serif)" font-size="58" font-weight="500">{payload.meta.name}</text>
-  <text x={CX} y={CY + 16} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="14.5" letter-spacing="3" font-weight="600">{payload.meta.country.toUpperCase()}</text>
-  <text x={CX} y={CY + 50} text-anchor="middle" fill="var(--ink)" font-family="var(--sans)" font-size="15.5">{payload.signature}</text>
-  <text x={CX} y={CY + 80} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="13.5">{tempFPrimary}°F / {tempCSecondary}°C avg · {precipInPrimary} in / {precipMmSecondary} mm/yr</text>
+  {full && (
+    <>
+      <circle cx={CX} cy={CY} r={R_DISC} fill="var(--bg)" />
+      <text x={CX} y={CY - 12} text-anchor="middle" fill="var(--ink)" font-family="var(--serif)" font-size="58" font-weight="500">{payload.meta.name}</text>
+      <text x={CX} y={CY + 16} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="14.5" letter-spacing="3" font-weight="600">{payload.meta.country.toUpperCase()}</text>
+      <text x={CX} y={CY + 50} text-anchor="middle" fill="var(--ink)" font-family="var(--sans)" font-size="15.5">{payload.signature}</text>
+      <text x={CX} y={CY + 80} text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" font-size="13.5">{tempFPrimary}°F / {tempCSecondary}°C avg · {precipInPrimary} in / {precipMmSecondary} mm/yr</text>
+    </>
+  )}
 
-  <rect width={W} height={H} fill="url(#vig)" pointer-events="none" />
+  <rect width={W} height={H} fill={`url(#vig-${uid})`} pointer-events="none" />
 </svg>
