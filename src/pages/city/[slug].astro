@@ -3,6 +3,7 @@
 import '../../styles/global.css';
 import FingerprintPoster from '../../components/FingerprintPoster.astro';
 import ExportRow from '../../components/ExportRow.astro';
+import ReadingKey from '../../components/ReadingKey.astro';
 import SearchField from '../../components/SearchField.astro';
 import Boot from '../../components/Boot.astro';
 import Controls from '../../components/Controls.astro';
@@ -47,6 +48,7 @@ const ogImage = new URL(`og/${payload.meta.slug}.png`, Astro.site);
   <main>
     <div class="poster-stage">
       <FingerprintPoster payload={payload} domain={domain} />
+      <ReadingKey domain={domain} />
     </div>
     <ExportRow />
   </main>

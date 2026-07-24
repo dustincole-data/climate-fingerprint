@@ -1,0 +1,189 @@
+---
+// src/components/ReadingKey.astro
+// The "how to read" key T04 §4 specced and the build never shipped — the Lupi leg of the T01 anchor
+// (legend-as-art: the key is part of the composition, not a caption under it).
+//
+// Deliberately NOT baked into the poster face (T04 §4): the download stays gallery-clean, so this lives
+// beside the poster on the web only. Everything it draws is real — the ramp is the actual 7-stop OKLCH
+// scale off color.ts, and its span is the poster's own fixed domain, so the bar is a calibrated legend
+// rather than a decorative gradient. The wedge is a magnified illustration: correct in relationship
+// (thickness = the day's range, colour = its mean, inner band = its rain), not in scale.
+import { RAMP, tempColor } from '../lib/color';
+import { isothermValuesF, labelledIsotherms } from '../lib/geometry';
+import { cToF, fToC } from '../lib/units';
+import type { Domain } from '../lib/types';
+
+interface Props { domain: Domain; }
+const { domain } = Astro.props as Props;
+
+// --- the magnified wedge -----------------------------------------------------------------------------
+// Off-centre so the right third of the figure is an annotation column; a centred wedge leaves nowhere for
+// the callouts to go but on top of the marks.
+// Radius and slice angle are chosen against each other so the wedge visibly curves: a bigger radius would be
+// truer to the poster's 9-in-365 arc and would draw a flat row of bars, which reads as a chart rather than a
+// piece of a ring. The days themselves wander rather than climbing a clean ramp — a staircase reads as a
+// diagram of nothing, and real normals wobble.
+const CX = 92, CY = 420, HALF = 0.28;
+const polar = (r: number, a: number): [number, number] => [CX + r * Math.sin(a), CY - r * Math.cos(a)];
+/** Local magnified temperature scale. 13°C (the ramp's pale pivot) sits at the wedge's mid radius. */
+const rKey = (t: number) => 290 + (t - 13) * 2.0;
+
+// Nine days of a warming spring: wide enough in mean to sweep visibly across the ramp (cyan to amber), and
+// scaled gently enough in radius that the sweep does not become a staircase. The radial scale is flatter
+// than the poster's on purpose — this is an illustration of the relationships, not a second plot.
+const DAYS = [
+  { mean: 7, lo: 1, hi: 13 }, { mean: 9.5, lo: 3.5, hi: 15 }, { mean: 9, lo: 2, hi: 16 },
+  { mean: 12.5, lo: 6.5, hi: 18 }, { mean: 14, lo: 8, hi: 20 }, { mean: 13.5, lo: 6.5, hi: 20.5 },
+  { mean: 17, lo: 11, hi: 23 }, { mean: 20, lo: 13, hi: 26 }, { mean: 22, lo: 16, hi: 28 },
+];
+const STEP = (HALF * 2) / DAYS.length;
+
+/** One day's band as a four-corner arc quad — the same shape render.ts draws, one order of magnitude up. */
+function bandPath(lo: number, hi: number, index: number): string {
+  const a0 = -HALF + index * STEP + STEP * 0.03;
+  const a1 = -HALF + (index + 1) * STEP - STEP * 0.03;
+  const r0 = rKey(lo), r1 = rKey(hi);
+  const [x0a, y0a] = polar(r0, a0), [x1a, y1a] = polar(r1, a0);
+  const [x1b, y1b] = polar(r1, a1), [x0b, y0b] = polar(r0, a1);
+  return `M${x0a.toFixed(1)},${y0a.toFixed(1)} L${x1a.toFixed(1)},${y1a.toFixed(1)}`
+    + ` A${r1.toFixed(1)},${r1.toFixed(1)} 0 0 1 ${x1b.toFixed(1)},${y1b.toFixed(1)}`
+    + ` L${x0b.toFixed(1)},${y0b.toFixed(1)} A${r0.toFixed(1)},${r0.toFixed(1)} 0 0 0 ${x0a.toFixed(1)},${y0a.toFixed(1)} Z`;
+}
+const bands = DAYS.map((d, i) => ({ d: bandPath(d.lo, d.hi, i), fill: tempColor(d.mean) }));
+
+/** The rain silhouette: same idea as the poster's, a bounded band rising off a fixed inner base. */
+const P_BASE = 200;
+const RAIN = [7, 11, 18, 26, 32, 29, 21, 14, 9];
+const rainPath = (() => {
+  const steps = RAIN.length - 1;
+  let top = '', floor = '';
+  RAIN.forEach((h, i) => {
+    const a = -HALF + (i / steps) * HALF * 2;
+    const [x, y] = polar(P_BASE + h, a);
+    top += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  });
+  for (let i = steps; i >= 0; i--) {
+    const [x, y] = polar(P_BASE, -HALF + (i / steps) * HALF * 2);
+    floor += 'L' + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  }
+  return top + floor + 'Z';
+})();
+
+const R_DISC = 170;
+const discArc = (() => {
+  const [x0, y0] = polar(R_DISC, -HALF), [x1, y1] = polar(R_DISC, HALF);
+  return `M${x0.toFixed(1)},${y0.toFixed(1)} A${R_DISC},${R_DISC} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)}`;
+})();
+
+// Callout geometry. The bracketed day is the LAST one, nearest the annotation column, so its leader reaches
+// the brace without crossing eight neighbours on the way.
+const last = DAYS[DAYS.length - 1];
+const lastA = HALF - STEP * 0.5;
+const bandTop = CY - rKey(last.hi) * Math.cos(lastA), bandBottom = CY - rKey(last.lo) * Math.cos(lastA);
+const bandEdge = CX + rKey(last.hi) * Math.sin(lastA);
+const rainTop = CY - (P_BASE + Math.max(...RAIN)), rainBottom = CY - P_BASE;
+const rainEdge = CX + (P_BASE + RAIN[RAIN.length - 1]) * Math.sin(HALF);
+
+// --- the calibrated ramp -----------------------------------------------------------------------------
+// Spanning the poster's fixed domain, so a position on this bar is the same temperature as that radius on
+// every one of the thirty rings — which is the whole argument for a global scale (T04 §1).
+const span = domain.tmax - domain.tmin;
+const at = (t: number) => ((t - domain.tmin) / span) * 100;
+const stops = [
+  { off: 0, color: tempColor(domain.tmin) },
+  ...RAMP.filter(s => s.t > domain.tmin && s.t < domain.tmax).map(s => ({ off: at(s.t), color: tempColor(s.t) })),
+  { off: 100, color: tempColor(domain.tmax) },
+];
+// The unit rides only the last tick, so the row reads as one scale rather than six repeated suffixes.
+const valuesF = isothermValuesF(domain);
+const valuesC = labelledIsotherms(domain);
+const ticksF = valuesF.map((f, i) => ({ x: at(fToC(f)), label: `${f}°${i === valuesF.length - 1 ? 'F' : ''}` }));
+const ticksC = valuesC.map((t, i) => ({ x: at(t), label: `${t}°${i === valuesC.length - 1 ? 'C' : ''}` }));
+---
+<aside class="key" aria-label="How to read a fingerprint">
+  <h2>How to read one</h2>
+
+  <svg class="fig" viewBox="0 92 300 190" role="img"
+       aria-label="A magnified slice of the ring: each bar is one day, its thickness the low-to-high range, its colour the typical mean, with the rainfall band inside it.">
+    <g class="days">{bands.map(b => <path d={b.d} fill={b.fill} />)}</g>
+    <path d={rainPath} fill="var(--precip)" fill-opacity="var(--precip-op)" />
+    <path d={discArc} fill="none" stroke="var(--hair)" stroke-width="1" />
+
+    <g class="lead">
+      <line x1={bandEdge + 4} y1={(bandTop + bandBottom) / 2} x2="184" y2={(bandTop + bandBottom) / 2} />
+      <line x1="186" y1={bandTop} x2="186" y2={bandBottom} class="brace" />
+      <line x1={rainEdge + 4} y1={(rainTop + rainBottom) / 2} x2="184" y2={(rainTop + rainBottom) / 2} />
+      <line x1="186" y1={rainTop} x2="186" y2={rainBottom} class="brace" />
+    </g>
+
+    <g class="note">
+      <text x="196" y={(bandTop + bandBottom) / 2 - 3}>one day, its</text>
+      <text x="196" y={(bandTop + bandBottom) / 2 + 13}>low to its high</text>
+      <text x="196" y={(rainTop + rainBottom) / 2 - 3}>the rain that</text>
+      <text x="196" y={(rainTop + rainBottom) / 2 + 13}>day, inside it</text>
+      <text x={CX} y={CY - R_DISC + 22} text-anchor="middle">the city sits here</text>
+    </g>
+  </svg>
+
+  <svg class="ramp" viewBox="0 0 300 40" role="img" aria-label="The temperature colour scale, cold to hot.">
+    <defs>
+      <linearGradient id="key-ramp" x1="0" y1="0" x2="1" y2="0">
+        {stops.map(s => <stop offset={`${s.off}%`} stop-color={s.color} />)}
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="300" height="13" fill="url(#key-ramp)" />
+    <g class="tick">
+      {ticksF.map(t => <text class="cf-u-imp" x={t.x * 3} y="29" text-anchor="middle">{t.label}</text>)}
+      {ticksC.map(t => <text class="cf-u-met" x={t.x * 3} y="29" text-anchor="middle">{t.label}</text>)}
+    </g>
+  </svg>
+
+  <p>Colour and distance from the centre both carry the same thing — the day's typical mean — on a scale
+    fixed across all thirty cities. Angle is the day of the year: January at the top, running clockwise.</p>
+</aside>
+
+<style>
+  .key {
+    flex: 0 0 300px;
+    max-width: 300px;
+    align-self: center;
+  }
+  .key h2 {
+    margin: 0 0 14px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--hair);
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.05rem;
+    color: var(--ink);
+  }
+  .fig { display: block; width: 100%; height: auto; }
+  .ramp { display: block; width: 100%; height: auto; margin-top: 6px; }
+
+  .lead line { stroke: var(--hair); stroke-width: 1; }
+  .lead .brace { stroke: var(--muted); }
+  .note text, .tick text {
+    font-family: var(--sans);
+    font-size: 11.5px;
+    fill: var(--muted);
+  }
+
+  .key p {
+    margin: 14px 0 0;
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--muted);
+    text-wrap: pretty;
+  }
+
+  /* Below the two-column threshold the key stacks under the poster (T04 §6) and stops being a sidebar:
+     full-measure prose, centred to the poster it explains. */
+  @media (max-width: 1120px) {
+    .key {
+      flex: 1 1 auto;
+      max-width: 440px;
+      margin: 8px auto 0;
+    }
+  }
+</style>

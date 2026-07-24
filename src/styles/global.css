@@ -7,8 +7,17 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); }
 body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-.poster-stage { display: flex; justify-content: center; padding: 24px; }
-.poster-stage svg { width: min(720px, 94vw); height: auto; }
+/* Poster + reading key. `>` matters: the key ships its own two figures, and the width rule below is the
+   poster's alone. Wrapping is what stacks the key under the poster on a narrow viewport (T04 §6). */
+.poster-stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(28px, 3.5vw, 60px);
+  padding: 24px;
+}
+.poster-stage > svg { width: min(720px, 94vw); height: auto; }
 
 /* ---- Poster: the parts that answer to the ground toggle (T04 §2) -------------------------------------
    render.ts emits one ground-agnostic SVG; everything that differs between dark and light resolves here,
@@ -19,20 +28,26 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .cf-vig-stop { stop-opacity: var(--vig-op); }
 
 .cf-mo { font-size: var(--mo-size); }
-/* The halo scales with the type, so it stays a tight outline instead of a blob once mobile bumps the size. */
-.cf-iso-label { font-size: var(--iso-size); stroke-width: calc(var(--iso-size) * 0.32); }
+/* The halo scales with the type, so it stays a tight outline instead of a blob once mobile bumps the size.
+   It is now only masking the reference grid — the ladder sits behind the day ring — so it can be thin. */
+.cf-iso-label { font-size: var(--iso-size); stroke-width: calc(var(--iso-size) * 0.22); }
 .cf-name { font-size: var(--name-size); }
 .cf-country { font-size: var(--country-size); }
 .cf-sig { font-size: var(--sig-size); }
 .cf-readout { font-size: var(--readout-size); }
+.cf-mark { font-size: var(--mark-size); }
+.cf-foot { font-size: var(--foot-size); }
 
-/* Month names shrink to initials, and the denser Fahrenheit grid sheds every second label, once the poster
-   is too small to read them (T04 §6). The rings themselves stay — they are texture, not type. */
-.cf-mo-init { display: none; }
+/* Month names shrink to initials, the denser Fahrenheit grid sheds every second label, and the colophon's
+   source line drops to its short spelling, once the poster is too small to read them (T04 §6). The rings
+   themselves stay — they are texture, not type. */
+.cf-mo-init, .cf-foot-short { display: none; }
 @media (max-width: 560px) {
   :root:not([data-exporting]) .cf-mo-full { display: none; }
   :root:not([data-exporting]) .cf-mo-init { display: inline; }
   :root:not([data-exporting]) .cf-iso-alt { display: none; }
+  :root:not([data-exporting]) .cf-foot-long { display: none; }
+  :root:not([data-exporting]) .cf-foot-short { display: inline; }
 }
 
 /* ---- Poster: units (T05 §6) --------------------------------------------------------------------------

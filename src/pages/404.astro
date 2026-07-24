@@ -5,6 +5,7 @@
 // for any path with no prerendered page, in dev and on Vercel alike, so the long-tail needs no serverless
 // route. (Slice 9 note: a vercel.json rewrite of /city/* to this shell would upgrade the 404 status to 200.)
 import '../styles/global.css';
+import ReadingKey from '../components/ReadingKey.astro';
 import SearchField from '../components/SearchField.astro';
 import Boot from '../components/Boot.astro';
 import Controls from '../components/Controls.astro';
@@ -28,6 +29,10 @@ const domain = await readDomain();
   </header>
 
   <main class="shell" id="shell" aria-live="polite"></main>
+
+  <!-- The key is city-independent, so it is rendered once here (scoped styles and all) and moved into the
+       stage when a typed city lands — a typed city gets the same reading aids as a curated one (T07 §1). -->
+  <div id="cf-key" hidden><ReadingKey domain={domain} /></div>
 
   <script type="application/json" id="cf-domain" set:html={JSON.stringify(domain)}></script>
 
@@ -103,6 +108,10 @@ const domain = await readDomain();
           <p class="sub">${escape(method)}</p>
         </div>
         ${exportRowHtml()}`);
+
+      // Carried across rather than re-rendered, so it keeps Astro's scoping attribute and its styles.
+      const key = document.getElementById('cf-key')?.firstElementChild;
+      if (key) shell.querySelector('.poster-stage')?.appendChild(key);
     }
 
     // Delegated, so it is live for the row main() injects once the city's data lands (T08 §3: a typed city

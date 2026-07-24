@@ -23,12 +23,16 @@
   --country-size: 14.5px;
   --sig-size: 15.5px;
   --readout-size: 13.5px;
+  --mark-size: 17px;
+  --foot-size: 14.5px;
 }
 
 :root[data-ground="light"] {
   --bg: oklch(98.6% .002 250);
   --ink: #241f1a;
-  --muted: #7d766c;
+  /* T04 §2 specced #7d766c, which measures 4.31:1 on this near-white ground — under AA for the masthead lead
+     and every caption that uses it. Darkened to the nearest tone that clears 4.5 with headroom (4.98:1). */
+  --muted: #736c62;
   --hair: rgba(36,31,26,.18);
   --iso: rgba(36,31,26,.075);
   --precip: oklch(52% .09 240);
@@ -49,6 +53,10 @@
     --country-size: 18px;
     --sig-size: 17px;
     --readout-size: 17px;
+    /* The colophon's baselines are fixed, so its type is bumped less than the ring labels — past ~23px the
+       three lines start closing on each other. It is credit, not something anyone reads on a phone. */
+    --mark-size: 23px;
+    --foot-size: 20px;
   }
 }
 
@@ -59,5 +67,7 @@
     --country-size: 20px;
     --sig-size: 18px;
     --readout-size: 19px;
+    --mark-size: 26px;
+    --foot-size: 22px;
   }
 }
