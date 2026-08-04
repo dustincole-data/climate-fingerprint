@@ -8,6 +8,7 @@ import SearchField from '../components/SearchField.astro';
 import Boot from '../components/Boot.astro';
 import Controls from '../components/Controls.astro';
 import { readCityPayload, readDomain } from '../lib/data';
+import DcdMark from "../components/DcdMark.astro";
 
 // Denver illustrates the how-to-read list: the widest diurnal band in the set (T02 — 14.7 °C average swing),
 // so every part of the encoding is visible in one mark.
@@ -164,6 +165,7 @@ const ogImage = new URL('og/_default.png', Astro.site);
       <p class="back"><a href="/">Back to the wall</a></p>
     </article>
   </main>
+  <DcdMark />
 
   <style>
     .page {

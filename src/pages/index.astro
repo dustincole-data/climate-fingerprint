@@ -6,6 +6,7 @@ import SearchField from '../components/SearchField.astro';
 import Boot from '../components/Boot.astro';
 import Controls from '../components/Controls.astro';
 import { readCitiesManifest, readCityPayload, readDomain } from '../lib/data';
+import DcdMark from "../components/DcdMark.astro";
 
 // Wall order = manifest order (curated registry order): max-contrast, fixed, designed — never random-per-load (T05 §gallery).
 // Build-time only: payloads + domain read via node fs, marks inlined as static SVG — the browser fetches zero day-files.
@@ -63,6 +64,7 @@ const ogImage = new URL('og/_default.png', Astro.site);
       </a>
     ))}
   </main>
+  <DcdMark />
 
   <style>
     /* The wall has no wordmark bar to hang the controls off, so they get their own quiet right-aligned row. */

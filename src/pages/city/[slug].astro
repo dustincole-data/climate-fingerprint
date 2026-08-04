@@ -10,6 +10,7 @@ import Controls from '../../components/Controls.astro';
 import { readCitiesManifest, readCityPayload, readDomain } from '../../lib/data';
 import { cityStats } from '../../lib/poster';
 import { cToF, mmToIn } from '../../lib/units';
+import DcdMark from "../../components/DcdMark.astro";
 
 export async function getStaticPaths() {
   const manifest = await readCitiesManifest();
@@ -55,5 +56,6 @@ const ogImage = new URL(`og/${payload.meta.slug}.png`, Astro.site);
     </div>
     <ExportRow />
   </main>
+  <DcdMark />
 </body>
 </html>
