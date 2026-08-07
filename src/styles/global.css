@@ -34,12 +34,17 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 /* The halo scales with the type, so it stays a tight outline instead of a blob once mobile bumps the size.
    It is now only masking the reference grid — the ladder sits behind the day ring — so it can be thin. */
 .cf-iso-label { font-size: var(--iso-size); stroke-width: calc(var(--iso-size) * 0.22); }
-.cf-name { font-size: var(--name-size); }
-.cf-country { font-size: var(--country-size); }
-.cf-sig { font-size: var(--sig-size); }
-.cf-readout { font-size: var(--readout-size); }
 .cf-mark { font-size: var(--mark-size); }
 .cf-foot { font-size: var(--foot-size); }
+
+/* The four centre-block lines (.cf-name/.cf-country/.cf-sig/.cf-readout) set NO font-size here. Theirs is
+   fitted per city and written onto the element by fit.ts, because the disc is a fixed-radius container and
+   a constant size cannot hold "Denver" and "San Francisco" both. The classes stay as hooks.
+
+   They also get no narrow-viewport bump. The bump elsewhere on this poster buys legibility from spare
+   ground; inside the disc there is none, so the old bumps did not make the centre bigger, they pushed it
+   over the precip ring — the signature at --sig-size 17 overran its chord by 44 units on a phone. Type in
+   a fixed circle cannot grow, so it does not. */
 
 /* Month names shrink to initials, the denser Fahrenheit grid sheds every second label, and the colophon's
    source line drops to its short spelling, once the poster is too small to read them (T04 §6). The rings
@@ -149,6 +154,32 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 .export button:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); }
 .export button:disabled { cursor: progress; opacity: 0.55; }
 .export button:focus-visible { outline: 2px solid var(--precip); outline-offset: 2px; }
+/* Print size sits next to the download button because it changes what that button produces. It borrows the
+   quiet button's metrics rather than the primary's — it is a setting, not the action. */
+.export .size { display: flex; }
+.export select {
+  padding: 11px 12px;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.export select:hover { color: var(--ink); border-color: var(--muted); }
+.export select:focus-visible { outline: 2px solid var(--precip); outline-offset: 2px; }
+/* The <select> paints its own popup in the OS colours, so its options need a real ground on dark. */
+.export select option { color: #241f1a; background: #fff; }
+.vh {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .export .fine {
   margin: 12px 0 0;
   font-family: var(--sans);

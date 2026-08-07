@@ -23,7 +23,17 @@ for build-time share cards. No serverless functions — 100% static.
 | `npm run data` | Build `public/data/*.json` (30 cities + the shared domain) from the committed fixtures. Gitignored output. |
 | `npm run og` | Render `public/og/*.png` share cards (30 cities + `_default`). Gitignored output. |
 | `npm run build` | `astro build` → `dist/…` |
-| `npm test` | Vitest (normals, geometry, color, slug, units, poster). |
+| `npm test` | Vitest (normals, geometry, color, slug, units, poster, fit, textmetrics, sheets). |
+
+### Browser-only scripts (manual, not CI)
+
+Both need a running `npm run dev` plus `npm i --no-save puppeteer-core`, and take the dev port as their
+one argument. Neither is a dependency of the build.
+
+| Command | What it does |
+|---|---|
+| `node scripts/verify-poster.mjs 4321` | The check the unit suite can't make. `fit.test.ts` asks "does it fit?" using the same estimator that placed the text, which is circular; this loads every city in real Chrome, reads real glyph ink, composes all six print sheets through the actual export path, and rasterizes the largest and smallest. Exits non-zero on any glyph crossing the ring or any sheet losing its margin. **Run it after touching `fit.ts`, `sheets.ts`, `render.ts` or the fonts.** |
+| `node scripts/textmetrics.mjs 4321` | Regenerates `src/lib/textmetrics.ts` (the advance tables the fitter measures against) from the real webfonts. Only needed if the fonts change. Refuses to write a table that under-reads by more than `SAFETY` covers. |
 
 `public/data/` and `public/og/` are **gitignored and CI-generated** — the Vercel build
 command regenerates them (`vercel.json` → `npm run data && npm run og && npm run build`).

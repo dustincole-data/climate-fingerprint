@@ -24,10 +24,6 @@
      only sizes allowed to grow: below ~0.4 scale a 15px month label renders under 6px (T04 §6 legibility floor). */
   --mo-size: 15px;
   --iso-size: 14px;
-  --name-size: 58px;
-  --country-size: 14.5px;
-  --sig-size: 15.5px;
-  --readout-size: 13.5px;
   --mark-size: 17px;
   --foot-size: 14.5px;
 }
@@ -53,9 +49,6 @@
   :root:not([data-exporting]) {
     --mo-size: 24px;
     --iso-size: 19px;
-    --country-size: 18px;
-    --sig-size: 17px;
-    --readout-size: 17px;
     /* The colophon's baselines are fixed, so its type is bumped less than the ring labels — past ~23px the
        three lines start closing on each other. It is credit, not something anyone reads on a phone. */
     --mark-size: 23px;
@@ -67,9 +60,6 @@
   :root:not([data-exporting]) {
     --mo-size: 30px;
     --iso-size: 24px;
-    --country-size: 20px;
-    --sig-size: 18px;
-    --readout-size: 19px;
     --mark-size: 26px;
     --foot-size: 22px;
   }

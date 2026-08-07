@@ -13,9 +13,19 @@ import type { CityPayload, Domain } from './types';
 import { N, MONTH_STARTS, MONTHS, angleForDoy, isothermValues, labelledIsotherms, isothermValuesF } from './geometry';
 import { rTemp, buildDayBands, buildPrecipRadii, cityStats } from './poster';
 import { cToF, fToC, mmToIn } from './units';
+import { fitCenterBlock, R_FIT } from './fit';
+import { W, CX, artTransform, DEFAULT_SHEET, type Sheet } from './sheets';
 
-export const W = 1000, H = 1414, CX = 500, CY = 620;
-const R_OUT = 430, R_DISC = 140, R_PBASE = 160, R_MONTH = R_OUT + 46;
+export { W, CX };
+/**
+ * The art is drawn in this coordinate system on every sheet; sheets.ts scales and places the whole thing.
+ * ART_H is only the box the bloom mask covers — it is not the sheet height any more (see Sheet.h).
+ */
+const ART_H = 1414;
+export const CY = 620;
+// R_DISC tracks fit.ts's R_FIT: it is the background punch behind the centre block, so it has to be at
+// least as big as the text it is behind. Both stay inside R_PBASE, so neither is visible on any ground.
+const R_OUT = 430, R_DISC = R_FIT, R_PBASE = 160, R_MONTH = R_OUT + 46;
 /** Fully-open bloom mask radius — past R_OUT + the month ring so nothing is ever clipped at rest. */
 const R_BLOOM = 520;
 
@@ -31,8 +41,10 @@ const SITE = 'climatefingerprint.dustincoledata.com';
 const GLOW_PAD = 14;
 
 export interface RenderOptions {
-  /** full = the portrait √2 poster; tile = square crop tight on the ring for the gallery wall. */
+  /** full = the portrait print sheet; tile = square crop tight on the ring for the gallery wall. */
   mode?: 'full' | 'tile';
+  /** Which print sheet the full poster is composed on. Ignored by tiles, which carry their own crop. */
+  sheet?: Sheet;
 }
 
 /** Escapes text/attribute content — city names reach this from a typed query, not just the curated registry. */
@@ -67,13 +79,14 @@ function coord(value: number, positive: string, negative: string): string {
 }
 
 export function renderPosterSvg(payload: CityPayload, domain: Domain, options: RenderOptions = {}): string {
-  const { mode = 'full' } = options;
+  const { mode = 'full', sheet = DEFAULT_SHEET } = options;
   const full = mode === 'full';
   // Unique per-instance ids so multiple posters in one document (the gallery wall) don't collide on url(#…).
   const uid = payload.meta.slug;
   // The tile crop is drawn in tight: 450 clears the outermost mark (R_OUT 430) and the halo it throws, and
   // nothing beyond that is ever painted — the old 480 spent 12% of every wall tile on empty ground.
-  const viewBox = full ? `0 0 ${W} ${H}` : `${CX - 450} ${CY - 450} 900 900`;
+  const sheetH = sheet.h;
+  const viewBox = full ? `0 0 ${W} ${sheetH.toFixed(2)}` : `${CX - 450} ${CY - 450} 900 900`;
 
   const bands = buildDayBands(payload, domain);
   const precipRadii = buildPrecipRadii(payload, domain);
@@ -109,12 +122,16 @@ export function renderPosterSvg(payload: CityPayload, domain: Domain, options: R
       + `<stop class="cf-vig-stop" offset="100%" stop-color="#000"></stop></radialGradient>`);
     // The bloom aperture. It ships fully open, so a render with no CSS, a paused animation, or
     // reduced-motion shows the finished poster — the reveal enhances a visible default, never gates it.
-    parts.push(`<mask id="bloom-${uid}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">`
+    parts.push(`<mask id="bloom-${uid}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${ART_H}">`
       + `<circle class="cf-bloom-eye" cx="${CX}" cy="${CY}" r="${R_BLOOM}" fill="#fff"></circle></mask>`);
   }
   parts.push('</defs>');
 
-  parts.push(`<rect width="${W}" height="${H}" fill="var(--bg)"></rect>`);
+  // The ground fills the sheet, so it stays outside the art group — as does the vignette at the end.
+  parts.push(`<rect class="cf-sheet-bg" width="${W}" height="${sheetH.toFixed(2)}" fill="var(--bg)"></rect>`);
+  // Everything from here to the matching </g> is the composition: one rigid group, uniformly scaled and
+  // placed by the sheet. Changing the print size moves this transform and nothing else (sheets.ts).
+  if (full) parts.push(`<g class="cf-art" transform="${artTransform(sheet)}">`);
 
   // The full poster's grid is cut for the ladder's gutter; a tile carries no labels, so its rings stay whole.
   const isoRing = (t: number, unitClass: string) => {
@@ -177,13 +194,32 @@ export function renderPosterSvg(payload: CityPayload, domain: Domain, options: R
       if (clear(t)) parts.push(isoLabel(t, `${t}°C`, 'cf-u-met'));
     }
 
+    // ---- Centre block ----------------------------------------------------------------------------------
+    // Sizes and baselines are fitted, not fixed: at the designed 58 the name crossed the precip ring on 18
+    // of the 30 curated cities (San Francisco by 71 units). fit.ts solves the whole four-line stack against
+    // the chord of R_FIT at each line's own baseline; a name that already fits is returned untouched at 58.
+    // Both readout spellings share one baseline, so the wider one is what the fit is solved for.
     const readoutImp = `${Math.round(cToF(annualMeanC))}°F avg · ${mmToIn(annualPrecipMm).toFixed(1)} in/yr`;
     const readoutMet = `${Math.round(annualMeanC)}°C avg · ${Math.round(annualPrecipMm)} mm/yr`;
-    const readoutAt = `x="${CX}" y="${CY + 80}" text-anchor="middle" fill="var(--muted)" font-family="var(--sans)"`;
+    const block = fitCenterBlock({
+      name: payload.meta.name,
+      country: payload.meta.country.toUpperCase(),
+      signature: payload.signature,
+      readout: readoutImp.length >= readoutMet.length ? readoutImp : readoutMet,
+    });
+    const at = (y: number, size: number) => `x="${CX}" y="${(CY + y).toFixed(1)}" font-size="${+size.toFixed(2)}" text-anchor="middle"`;
+
     parts.push(`<circle cx="${CX}" cy="${CY}" r="${R_DISC}" fill="var(--bg)"></circle>`);
-    parts.push(`<text class="cf-name" x="${CX}" y="${CY - 12}" text-anchor="middle" fill="var(--ink)" font-family="var(--serif)" font-weight="500">${esc(payload.meta.name)}</text>`);
-    parts.push(`<text class="cf-country" x="${CX}" y="${CY + 16}" text-anchor="middle" fill="var(--muted)" font-family="var(--sans)" letter-spacing="3" font-weight="600">${esc(payload.meta.country.toUpperCase())}</text>`);
-    parts.push(`<text class="cf-sig" x="${CX}" y="${CY + 50}" text-anchor="middle" fill="var(--ink)" font-family="var(--sans)">${esc(payload.signature)}</text>`);
+    for (const line of block.name.lines) {
+      parts.push(`<text class="cf-name" ${at(line.y, block.name.size)} fill="var(--ink)" font-family="var(--serif)" font-weight="500">${esc(line.text)}</text>`);
+    }
+    for (const line of block.country.lines) {
+      parts.push(`<text class="cf-country" ${at(line.y, block.country.size)} fill="var(--muted)" font-family="var(--sans)" letter-spacing="3" font-weight="600">${esc(line.text)}</text>`);
+    }
+    for (const line of block.signature.lines) {
+      parts.push(`<text class="cf-sig" ${at(line.y, block.signature.size)} fill="var(--ink)" font-family="var(--sans)">${esc(line.text)}</text>`);
+    }
+    const readoutAt = `${at(block.readout.lines[0].y, block.readout.size)} fill="var(--muted)" font-family="var(--sans)"`;
     parts.push(`<text class="cf-readout cf-u-imp" ${readoutAt}>${readoutImp}</text>`);
     parts.push(`<text class="cf-readout cf-u-met" ${readoutAt}>${readoutMet}</text>`);
 
@@ -219,9 +255,11 @@ export function renderPosterSvg(payload: CityPayload, domain: Domain, options: R
       + `Normals ${start}–${end} · ERA5 / Open-Meteo</text>`);
   }
 
+  if (full) parts.push('</g>');
+
   // A tile is 180px of ring on a wall, where the vignette is not depth but haze — and its gradient stopped at
   // the SVG's edge while the caption below kept the flat ground, drawing a seam across all 30 (loud on light).
-  if (full) parts.push(`<rect width="${W}" height="${H}" fill="url(#vig-${uid})" pointer-events="none"></rect>`);
+  if (full) parts.push(`<rect class="cf-sheet-vig" width="${W}" height="${sheetH.toFixed(2)}" fill="url(#vig-${uid})" pointer-events="none"></rect>`);
   parts.push('</svg>');
   return parts.join('');
 }
