@@ -6,7 +6,7 @@
 // <radialGradient> natively (unlike feGaussianBlur, T04 §2's glow), so the halo is baked as one here rather
 // than reusing the live poster's blur filter.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
@@ -14,6 +14,7 @@ import { formatHex, oklch } from 'culori';
 import { readCitiesManifest, readCityPayload, readDomain } from '../src/lib/data.ts';
 import { buildDayBands, buildPrecipRadii } from '../src/lib/poster.ts';
 import { angleForDoy, N } from '../src/lib/geometry.ts';
+import { fitWidth } from '../src/lib/textmetrics.ts';
 import { cToF, mmToIn } from '../src/lib/units.ts';
 import type { CityManifestEntry, CityPayload, Domain } from '../src/lib/types.ts';
 
@@ -84,7 +85,45 @@ function ringSvgChildren(payload: CityPayload, domain: Domain) {
   ];
 }
 
-function cardTree(name: string, readout: string, ring: unknown[]) {
+/**
+ * What the name is fitted to. The column itself runs to the card's right edge, so the fit budget holds
+ * back a gutter matching the block's own 24 left margin — a shrunk name that stops one pixel short of the
+ * bleed still reads as an accident. Every card that exists today is far inside this, so it costs nothing.
+ */
+export const NAME_BOX = W * 0.5 - 24 - 24;
+export const NAME_SIZE = 62;
+/** Below this the name stops reading as the card's headline, so a token that will not go is cut instead. */
+export const NAME_FLOOR = 38;
+
+/** Longest prefix plus an ellipsis that fits the column. The backstop for a token still over at the floor. */
+function truncateToken(token: string, size: number): string {
+  if (fitWidth('serif500', token, size) <= NAME_BOX) return token;
+  const chars = [...token];
+  for (let n = chars.length - 1; n > 0; n--) {
+    const candidate = chars.slice(0, n).join('') + '…';
+    if (fitWidth('serif500', candidate, size) <= NAME_BOX) return candidate;
+  }
+  return '…';
+}
+
+/**
+ * Satori wraps the name at its spaces by itself, so the only thing that can run off a card is a single
+ * token wider than the column: "Thiruvananthapuram" set at 62 measures 648 against a 576-wide box and
+ * prints clipped at the card's right edge. Shrink until the widest token fits, then ellipsize only if the
+ * floor still will not hold it — the poster's own shrink-then-truncate ladder (fit.ts), measured with the
+ * same committed advance tables (textmetrics.ts) rather than a second estimator. No curated city reaches
+ * either path: all 30 set at the designed 62, so this changes no card that exists today.
+ */
+export function fitName(name: string): { size: number; text: string } {
+  const tokens = name.split(' ');
+  // fitWidth is linear in size at zero letter-spacing, so the exact size is one division, not a search.
+  const widest = Math.max(...tokens.map(t => fitWidth('serif500', t, NAME_SIZE)));
+  const size = Math.max(NAME_FLOOR, Math.min(NAME_SIZE, (NAME_SIZE * NAME_BOX) / widest));
+  return { size, text: tokens.map(t => truncateToken(t, size)).join(' ') };
+}
+
+function cardTree(rawName: string, readout: string, ring: unknown[]) {
+  const name = fitName(rawName);
   return {
     type: 'div',
     props: {
@@ -94,7 +133,7 @@ function cardTree(name: string, readout: string, ring: unknown[]) {
         {
           type: 'div', props: {
             style: { display: 'flex', flexDirection: 'column', width: W * 0.5 - 24, marginLeft: 24 }, children: [
-              { type: 'div', props: { style: { fontFamily: 'IBM Plex Serif', fontWeight: 500, fontSize: 62, lineHeight: 1.1, color: INK }, children: name } },
+              { type: 'div', props: { style: { fontFamily: 'IBM Plex Serif', fontWeight: 500, fontSize: name.size, lineHeight: 1.1, color: INK }, children: name.text } },
               { type: 'div', props: { style: { fontFamily: 'IBM Plex Sans', fontWeight: 400, fontSize: 27, lineHeight: 1.3, color: MUTED, marginTop: 16 }, children: readout } },
               {
                 type: 'div', props: {
@@ -152,4 +191,7 @@ async function main() {
   console.log(`wrote ${manifest.length} curated OG cards + _default.png to ${OUT}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// Guarded so og.test.ts can import the fitter without building 31 cards to do it.
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}
